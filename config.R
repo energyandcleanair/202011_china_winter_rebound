@@ -1,8 +1,11 @@
-require(tidyverse)
-require(remotes)
-# remotes::install_github("energyandcleanair/rcrea")
-require(rcrea)
+library(dplyr)
+library(remotes)
+library(tidyverse)
+remotes::install_github("energyandcleanair/rcrea")
+library(rcrea)
 
+library(showtext)
+showtext_auto()
 
 dir_results <- "results"
 dir_results_plots <- "results/plots"

@@ -33,7 +33,7 @@ utils.replace_w_chinese <- function(m, stations){
                     distinct(CityEN, CityZH) %>%
                     mutate(region_id=tolower(CityEN))) %>%
     mutate(
-      region_id=gsub(">","", gsub("<U\\+","\\\\u",CityZH)),
+      region_id=CityZH,
       # region_id=stringi::stri_unescape_unicode(gsub(">","", gsub("<U\\+","\\\\u",CityZH))),
       region_name=region_id) %>%
     select(-c(CityEN, CityZH))

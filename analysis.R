@@ -15,6 +15,7 @@ cities <- cities %>% filter(!CityEN %in% duplicated_cities)
 
 
 # Observations: City level ------------------------------------------------------------
+
 if(F){
   m.obs <- readRDS(file.path(dir_results, "m.obs.RDS"))
 }else{
@@ -27,6 +28,7 @@ if(F){
   saveRDS(m.obs, file.path(dir_results, "m.obs.RDS"))
 }
 
+# Plot 1: TS City 30-day
 rcrea::plot_recents(meas_raw=m.obs %>% filter(date>="2018-01-01"),
                     color_by="year",
                     subfile_by = "poll",
@@ -38,7 +40,6 @@ rcrea::plot_recents(meas_raw=m.obs %>% filter(date>="2018-01-01"),
                     folder = file.path(dir_results_plots, "city", "EN")
 )
 
-# NOT WORKING YET
 rcrea::plot_recents(meas_raw=m.obs %>% filter(date>="2018-01-01") %>% utils.replace_w_chinese(stations),
                     color_by="year",
                     subfile_by = "poll",
@@ -47,9 +48,11 @@ rcrea::plot_recents(meas_raw=m.obs %>% filter(date>="2018-01-01") %>% utils.repl
                     size="l",
                     range="full",
                     source="mee",
+                    add_to_ggplot=theme(text=element_text(family="STFangsong")),
                     folder = file.path(dir_results_plots, "city", "ZH")
 )
 
+# Plot 2: TS City 365-day
 rcrea::plot_recents(meas_raw=m.obs %>% filter(date>="2017-01-02"),
                     color_by="year",
                     subfile_by = "poll",
@@ -61,7 +64,6 @@ rcrea::plot_recents(meas_raw=m.obs %>% filter(date>="2017-01-02"),
                     folder = file.path(dir_results_plots, "city", "EN")
 )
 
-# NOT WORKING YET
 rcrea::plot_recents(meas_raw=m.obs %>% filter(date>="2017-01-02")%>% utils.replace_w_chinese(stations),
                     color_by="year",
                     subfile_by = "poll",
@@ -70,9 +72,11 @@ rcrea::plot_recents(meas_raw=m.obs %>% filter(date>="2017-01-02")%>% utils.repla
                     size="l",
                     range="full",
                     source="mee",
+                    add_to_ggplot=theme(text=element_text(family="STFangsong")),
                     folder = file.path(dir_results_plots, "city", "ZH")
 )
 
+# Plot 3: YOY City 30-day
 rcrea::plot_recents(meas_raw=m.obs %>% filter(date>="2018-12-01"),
                     type="yoy-relative",
                     subfile_by = "poll",
@@ -85,7 +89,6 @@ rcrea::plot_recents(meas_raw=m.obs %>% filter(date>="2018-12-01"),
                     folder = file.path(dir_results_plots, "city", "EN")
 )
 
-# NOT WORKING YET
 rcrea::plot_recents(meas_raw=m.obs %>% filter(date>="2018-12-01"),
                     type="yoy-relative",
                     subfile_by = "poll",
@@ -95,6 +98,7 @@ rcrea::plot_recents(meas_raw=m.obs %>% filter(date>="2018-12-01"),
                     size="l",
                     range="full",
                     source="mee",
+                    add_to_ggplot=theme(text=element_text(family="STFangsong")),
                     folder = file.path(dir_results_plots, "city", "ZH")
 )
 
@@ -132,6 +136,7 @@ m.region <- m.station.obs.rich %>%
          region_name=tools::toTitleCase(region_id))
 
 
+# Plot 1: YOY 30-day
 rcrea::plot_recents(meas_raw=m.region %>% filter(date>="2018-12-01"),
                     type="yoy-relative",
                     subfile_by = "poll",
