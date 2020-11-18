@@ -1,6 +1,13 @@
 
 utils.read_stations <- function(){
-  read.csv("data/station_key2018.csv")
+  read.csv("data/station_key2018.csv") -> stationkey
+  read.csv(paste0("data/stationZHnames,with Fenwei.csv"),
+           encoding="UTF-8",
+           stringsAsFactors=F) %>%
+    rename(station_name=station,CityZH=City) -> citynames
+
+  stationkey %>% sel(-station_name, -CityZH) %>%
+    right_join(citynames, .)
 }
 
 utils.check_cities_unique <- function(cities, stations){
@@ -26,8 +33,8 @@ utils.replace_w_chinese <- function(m, stations){
                     distinct(CityEN, CityZH) %>%
                     mutate(region_id=tolower(CityEN))) %>%
     mutate(
-      # region_id=gsub(">","", gsub("<U\\+","\\\\u",CityZH)),
-      region_id=stringi::stri_unescape_unicode(gsub(">","", gsub("<U\\+","\\\\u",CityZH))),
+      region_id=CityZH,
+      # region_id=stringi::stri_unescape_unicode(gsub(">","", gsub("<U\\+","\\\\u",CityZH))),
       region_name=region_id) %>%
     select(-c(CityEN, CityZH))
 }

@@ -1,7 +1,9 @@
 library(dplyr)
 library(remotes)
-# remotes::install_github("energyandcleanair/rcrea")
+library(tidyverse)
+remotes::install_github("energyandcleanair/rcrea")
 library(rcrea)
+
 library(showtext)
 showtext_auto()
 

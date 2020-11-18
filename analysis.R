@@ -48,7 +48,7 @@ rcrea::plot_recents(meas_raw=m.obs %>% filter(date>="2018-01-01") %>% utils.repl
                     size="l",
                     range="full",
                     source="mee",
-                    add_to_ggplot=theme(text=element(family="STFangsong")),
+                    add_to_ggplot=theme(text=element_text(family="STFangsong")),
                     folder = file.path(dir_results_plots, "city", "ZH")
 )
 
@@ -72,7 +72,7 @@ rcrea::plot_recents(meas_raw=m.obs %>% filter(date>="2017-01-02")%>% utils.repla
                     size="l",
                     range="full",
                     source="mee",
-                    add_to_ggplot=theme(text=element(family="STFangsong")),
+                    add_to_ggplot=theme(text=element_text(family="STFangsong")),
                     folder = file.path(dir_results_plots, "city", "ZH")
 )
 
@@ -98,7 +98,7 @@ rcrea::plot_recents(meas_raw=m.obs %>% filter(date>="2018-12-01"),
                     size="l",
                     range="full",
                     source="mee",
-                    add_to_ggplot=theme(text=ggplot2::element_text(family="STFangsong")),
+                    add_to_ggplot=theme(text=element_text(family="STFangsong")),
                     folder = file.path(dir_results_plots, "city", "ZH")
 )
 

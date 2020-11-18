@@ -3,10 +3,8 @@ source('./utils.R')
 source('./plots.R')
 
 stations <- utils.read_stations()
-cities <- stations %>%
-    filter(keyregion=="Jingjinji" |
-             keyregion2018=="2+26" |
-             Fenwei,
+cities<- stations %>%
+    filter(!is.na(keyregion2018),
            CityEN!="<NA>") %>%
     distinct(CityEN)
 
@@ -25,6 +23,46 @@ rcrea::plot_recents(meas_raw=d.obs %>% filter(process_id=="anomaly_percent_gbm_l
                     subplot_by = "region_id",
                     subfile_by = "poll",
                     folder=file.path(dir_results_plots, "deweathered"))
+
+
+# Regional ----------------------------------------------------------------
+l <- rcrea::locations(source="mee")
+
+# Which cities are not unique
+duplicated_cities <- stations %>%
+  distinct(CityEN, Province) %>%
+  group_by(CityEN) %>%
+  summarise(count=n()) %>%
+  filter(count>1) %>%
+  pull(CityEN)
+
+# These cities have been wrongly averaged together during scraping,
+# so we exclude them from the region averaging
+d.obs.regional <- d.obs %>%
+  left_join(stations %>% select(CityEN, keyregion2018) %>% mutate(region_id=tolower(CityEN)) ,
+            by=c("region_id")) %>%
+  filter(!is.na(keyregion2018),
+         !tolower(CityEN) %in% tolower(duplicated_cities)) %>%
+  # Add weight: 'one station, one vote'
+  left_join( stations %>%
+               group_by(CityEN, keyregion2018) %>%
+               summarise(weight=n())) %>%
+  # Average
+  group_by(poll, unit, date, process_id, source, timezone, country, keyregion2018, region_name=keyregion2018) %>%
+  summarise(value=weighted.mean(value, weight, na.rm=T)) %>%
+  rename(region_id=keyregion2018)
+
+
+rcrea::plot_recents(meas_raw=d.obs.regional %>% filter(process_id=="anomaly_percent_gbm_lag1_city_mad"),
+                    running_days = 30,
+                    aggregate_level = "region",
+                    source="mee",
+                    range="full",
+                    size="l",
+                    color_by="value",
+                    subplot_by = "region_id",
+                    subfile_by = "poll",
+                    folder=file.path(dir_results_plots, "deweathered", "regional"))
 
 
 # Custom deweathering ------------------------------------------------------
