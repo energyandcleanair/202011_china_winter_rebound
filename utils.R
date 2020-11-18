@@ -1,14 +1,13 @@
 
 utils.read_stations <- function(){
-  utils.read_stations <- function(){
-    read.csv("data/station_key2018.csv") -> stationkey
-    read.csv(paste0("data/stationZHnames,with Fenwei.csv"),
-             encoding="UTF-8",
-             stringsAsFactors=F) %>%
-      rename(station_name=station=,CityZH=City) -> citynames
+  read.csv("data/station_key2018.csv") -> stationkey
+  read.csv(paste0("data/stationZHnames,with Fenwei.csv"),
+           encoding="UTF-8",
+           stringsAsFactors=F) %>%
+    rename(station_name=station,CityZH=City) -> citynames
 
-    merge(citynames,stationkey[,-1],all.y=T)
-  }
+  stationkey %>% sel(-station_name, -CityZH) %>%
+    right_join(citynames, .)
 }
 
 utils.check_cities_unique <- function(cities, stations){
