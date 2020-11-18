@@ -110,7 +110,6 @@ rcrea::plot_recents(meas_raw=m.region %>% filter(date>="2018-12-01"),
 # National ----------------------------------------------------------------
 
 m.national <- m.station.obs %>%
-  filter(poll %in% c(rcrea::PM25, rcrea::NO2, rcrea::O3, rcrea::SO2)) %>%
   group_by(date, poll, unit, region_id="china", process_id, source, timezone) %>%
   summarise(value=mean(value, na.rm=T)) %>%
   mutate(country="CN",
