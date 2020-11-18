@@ -1,8 +1,9 @@
-require(dplyr)
-require(remotes)
+library(dplyr)
+library(remotes)
 # remotes::install_github("energyandcleanair/rcrea")
-require(rcrea)
-
+library(rcrea)
+library(showtext)
+showtext_auto()
 
 dir_results <- "results"
 dir_results_plots <- "results/plots"
