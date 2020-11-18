@@ -4,12 +4,30 @@ utils.read_stations <- function(){
 }
 
 utils.check_cities_unique <- function(cities, stations){
-  if(nrow(
-    cities %>% distinct(CityEN) %>%
-    left_join(stations %>% distinct(CityEN, Province) %>% filter(!is.na(CityEN)))) != nrow(cities %>% distinct(CityEN))){
-    warning("Careful, city English names are not unique")
-    return(F)
+
+  duplicated_cities <- cities %>%
+    left_join(stations) %>%
+    distinct(CityEN, Province) %>%
+    group_by(CityEN) %>%
+    summarise(count=n()) %>%
+    filter(count>1) %>%
+    pull(CityEN)
+
+  if(length(duplicated_cities)>0){
+    warning(paste("Careful, some cities are duplicated:", paste(duplicated_cities, collapse=", ")))
+    return(duplicated_cities)
   }else{
     return(T)
   }
+}
+
+utils.replace_w_chinese <- function(m, stations){
+  m %>% left_join(stations %>%
+                    distinct(CityEN, CityZH) %>%
+                    mutate(region_id=tolower(CityEN))) %>%
+    mutate(
+      region_id=gsub(">","", gsub("<U\\+","\\\\u",CityZH)),
+      # region_id=stringi::stri_unescape_unicode(gsub(">","", gsub("<U\\+","\\\\u",CityZH))),
+      region_name=region_id) %>%
+    select(-c(CityEN, CityZH))
 }

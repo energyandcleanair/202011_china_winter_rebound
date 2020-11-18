@@ -5,13 +5,12 @@ source('./plots.R')
 stations <- utils.read_stations()
 
 (cities <- stations %>%
-    filter(keyregion=="Jingjinji" |
-             keyregion2018=="2+26" |
-             Fenwei,
+    filter(!is.na(keyregion2018),
            CityEN!="<NA>") %>%
     distinct(CityEN))
 
-utils.check_cities_unique(cities, stations)
+duplicated_cities <- utils.check_cities_unique(cities, stations)
+cities <- cities %>% filter(!CityEN %in% duplicated_cities)
 
 
 
@@ -31,12 +30,24 @@ if(F){
 rcrea::plot_recents(meas_raw=m.obs %>% filter(date>="2018-01-01"),
                     color_by="year",
                     subfile_by = "poll",
-                    running_days = c(14,30),
+                    running_days = 30,
                     subplot_by = "region_id",
                     size="l",
                     range="full",
                     source="mee",
-                    folder = file.path(dir_results_plots, "city")
+                    folder = file.path(dir_results_plots, "city", "EN")
+)
+
+# NOT WORKING YET
+rcrea::plot_recents(meas_raw=m.obs %>% filter(date>="2018-01-01") %>% utils.replace_w_chinese(stations),
+                    color_by="year",
+                    subfile_by = "poll",
+                    running_days = 30,
+                    subplot_by = "region_id",
+                    size="l",
+                    range="full",
+                    source="mee",
+                    folder = file.path(dir_results_plots, "city", "ZH")
 )
 
 rcrea::plot_recents(meas_raw=m.obs %>% filter(date>="2017-01-02"),
@@ -47,19 +58,44 @@ rcrea::plot_recents(meas_raw=m.obs %>% filter(date>="2017-01-02"),
                     size="l",
                     range="full",
                     source="mee",
-                    folder = file.path(dir_results_plots, "city")
+                    folder = file.path(dir_results_plots, "city", "EN")
+)
+
+# NOT WORKING YET
+rcrea::plot_recents(meas_raw=m.obs %>% filter(date>="2017-01-02")%>% utils.replace_w_chinese(stations),
+                    color_by="year",
+                    subfile_by = "poll",
+                    running_days = 365,
+                    subplot_by = "region_id",
+                    size="l",
+                    range="full",
+                    source="mee",
+                    folder = file.path(dir_results_plots, "city", "ZH")
 )
 
 rcrea::plot_recents(meas_raw=m.obs %>% filter(date>="2018-12-01"),
                     type="yoy-relative",
                     subfile_by = "poll",
-                    running_days = c(30),
+                    running_days = 30,
                     subplot_by = "region_id",
                     color_by="value",
                     size="l",
                     range="full",
                     source="mee",
-                    folder = file.path(dir_results_plots, "city")
+                    folder = file.path(dir_results_plots, "city", "EN")
+)
+
+# NOT WORKING YET
+rcrea::plot_recents(meas_raw=m.obs %>% filter(date>="2018-12-01"),
+                    type="yoy-relative",
+                    subfile_by = "poll",
+                    running_days = 30,
+                    subplot_by = "region_id",
+                    color_by="value",
+                    size="l",
+                    range="full",
+                    source="mee",
+                    folder = file.path(dir_results_plots, "city", "ZH")
 )
 
 plots.compare_past_years(m.obs,
@@ -72,7 +108,9 @@ plots.compare_past_years(m.obs,
 if(F){
   m.station.obs <- readRDS(file.path(dir_results, "m.station.obs.RDS"))
 }else{
+  station_ids <- stations %>% filter(!is.na(keyregion2018)) %>% pull(station_code)
   m.station.obs <- rcrea::measurements(source="mee",
+                                       location_id=station_ids,
                                        process_id="station_day_mad",
                                        date_from="2018-12-01",
                                        poll=c(rcrea::PM25, rcrea::NO2, rcrea::SO2, rcrea::O3),
@@ -83,7 +121,7 @@ if(F){
 
 m.station.obs.rich <- m.station.obs %>%
   mutate(region_id=toupper(region_id)) %>%
-  left_join(stations %>% select(station_code,keyregion2018), by=c("region_id"="station_code")) %>%
+  left_join(stations %>% select(station_code, keyregion2018), by=c("region_id"="station_code")) %>%
   filter(!is.na(keyregion2018))
 
 

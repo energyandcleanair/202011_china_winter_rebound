@@ -29,5 +29,9 @@ rcrea::plot_recents(meas_raw=d.obs %>% filter(process_id=="anomaly_percent_gbm_l
 
 # Custom deweathering ------------------------------------------------------
 require(creadeweather)
-
+d <- creadeweather::deweather(source="mee",
+                              poll="pm25",
+                              output="anomaly",
+                              upload_results = F,
+                              training_start_anomaly = "2017-03-01")
 
