@@ -14,7 +14,7 @@ m.station.obs %>% filter(poll=='pm25', date>='2019-01-01') %>%
   mutate(Q=lubridate::quarter(date, with_year = T)) ->
   daily
 
-m.keyregions <- daily %>%
+m.keyregions <- daily %>% filter(!is.na(keyregion2018), keyregion2018 != 'PRD') %>%
   group_by(region_id=keyregion2018, process_id, date, poll, timezone, unit, source) %>%
   summarise_at('value', mean, na.rm=T)
 
@@ -54,13 +54,17 @@ m.quarterly %<>% filter(source=='hourly') %>%
                         (1 + target_reduction) * value_base,
                         value))
 
+mean4=function(x) ifelse(length(x)==4,mean(x), NA)
+targetmean=function(df) {
+  df %>% group_by(CityEN, Province, keyregion2018) %>% summarise_at('value', mean4) %>%
+    filter(!is.na(value))
+}
+
 bind_rows(m.quarterly %>% filter(source == 'hourly', Q %in% c(2020.1, 2020.2, 2020.3)),
-          m.quarterly %>% filter(source == 'target', Q %in% c(2020.4))) %>%
-  group_by(CityEN, Province, keyregion2018) %>% summarise_at('value', mean) -> targetmeans.Q4
+          m.quarterly %>% filter(source == 'target', Q %in% c(2020.4))) %>% targetmean -> targetmeans.Q4
 
 bind_rows(m.quarterly %>% filter(source == 'hourly', Q %in% c(2020.2, 2020.3)),
-          m.quarterly %>% filter(source == 'target', Q %in% c(2020.4, 2021.1))) %>%
-  group_by(CityEN, Province, keyregion2018) %>% summarise_at('value', mean) -> targetmeans.Q1
+          m.quarterly %>% filter(source == 'target', Q %in% c(2020.4, 2021.1))) %>% targetmean -> targetmeans.Q1
 
 
 #One year running mean plots with the target for end of Q4 and Q1 marked as points, and linear path from latest value to targets
