@@ -82,14 +82,18 @@ d <- file.path(dir_results_plots, "regional", "EN")
 dir.create(d, showWarnings = F, recursive = T)
 ggsave(file.path(d, "target_regional.png"),
        width=8,
-       height=8)
+       height=6)
 }
 
 #WIP
-plots.quarter_anomalies <- function(m.dew.regional){
+plots.quarter_anomalies <- function(m.dew.regional, absolute_or_percent="absolute"){
+
+  absolute <- absolute_or_percent == "absolute"
+  process_id <- ifelse(absolute, "anomaly_gbm_lag1_city_mad", "anomaly_percent_gbm_lag1_city_mad")
+  ylab <- ifelse(absolute, "Anomaly [µg/m3]", "Anomaly [%]")
 
   m.plot <- m.dew.regional %>%
-    filter(process_id=="anomaly_gbm_lag1_city_mad",
+    filter(process_id==!!process_id,
            date>="2020-01-01") %>%# Anomaly in absolute terms
     mutate(Q=gsub("\\.","Q",as.character(lubridate::quarter(date, with_year = T)))) %>%
     group_by(poll, region_id, process_id, Q) %>%
@@ -97,13 +101,24 @@ plots.quarter_anomalies <- function(m.dew.regional){
 
   polls <- unique(m.plot$poll)
   for(poll in polls){
-    p <-  ggplot(m.plot %>% filter(poll)) +
-      geom_bar(stat="identity", aes(Q, value)) +
-      facet_wrap(poll~region_id) +
+    (p <-  ggplot(m.plot %>% filter(poll==!!poll)) +
+      geom_bar(stat="identity", aes(Q, value, fill="a"), show.legend = F) +
+      facet_wrap(~region_id) +
+      rcrea::CREAtheme.scale_fill_crea_d() +
       theme_crea() +
       labs(
-        y="Anomaly [µg/m3]",
-        x=NULL
-      )
+        y=ylab,
+        x=NULL,
+        title=paste0(rcrea::poll_str(poll), " pollutant levels in 2020"),
+        subtitle="Weather-corrected anomalies in 2020 quarters",
+        caption="A negative value indicates an air pollution level lower than what would have been expected under observed weather conditions.
+Source: CREA based on MEE."
+      ))
+    d <- file.path(dir_results_plots, "deweathered", "regional")
+    dir.create(d, showWarnings = F, recursive = T)
+    ggsave(file.path(d, paste0("mee_region_anomaly_qtd_",poll,"_",absolute_or_percent,".png")),
+           p,
+           width=8,
+           height=8)
   }
 }
