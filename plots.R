@@ -29,7 +29,6 @@ plots.compare_past_years <- function(m, poll, folder=NULL, width=14, height=12, 
 
 }
 
-
 plots.targets <- function(targetmeans.Q1, targetmeans.Q4, m.keyregions, nrow=2, width=7.5,height=7.5, dpi=270, ...){
 
   m <- m.keyregions %>%
@@ -86,10 +85,14 @@ plots.targets <- function(targetmeans.Q1, targetmeans.Q4, m.keyregions, nrow=2, 
 }
 
 #WIP
-plots.quarter_anomalies <- function(m.dew.regional){
+plots.quarter_anomalies <- function(m.dew.regional, absolute_or_percent="absolute"){
+
+  absolute <- absolute_or_percent == "absolute"
+  process_id <- ifelse(absolute, "anomaly", "anomaly_percent")
+  ylab <- ifelse(absolute, paste0("Anomaly [",mu,"g/m3]"), "Anomaly [%]")
 
   m.plot <- m.dew.regional %>%
-    filter(process_id=="anomaly_gbm_lag1_city_mad",
+    filter(process_id==!!process_id,
            date>="2020-01-01") %>%# Anomaly in absolute terms
     mutate(Q=gsub("\\.","Q",as.character(lubridate::quarter(date, with_year = T)))) %>%
     group_by(poll, region_id, process_id, Q) %>%
@@ -97,13 +100,65 @@ plots.quarter_anomalies <- function(m.dew.regional){
 
   polls <- unique(m.plot$poll)
   for(poll in polls){
-    p <-  ggplot(m.plot %>% filter(poll)) +
-      geom_bar(stat="identity", aes(Q, value)) +
-      facet_wrap(poll~region_id) +
+    (p <-  ggplot(m.plot %>% filter(poll==!!poll)) +
+      geom_bar(stat="identity", aes(Q, value, fill="a"), show.legend = F) +
+      facet_wrap(~region_id) +
+      rcrea::CREAtheme.scale_fill_crea_d() +
       theme_crea() +
       labs(
-        y=expression(paste("Anomaly [",mu,"g/m3]")),
-        x=NULL
-      )
+        y=ylab,
+        x=NULL,
+        title=paste0(rcrea::poll_str(poll), " pollutant levels in 2020"),
+        subtitle="Weather-corrected anomalies in 2020 quarters",
+        caption="A negative value indicates an air pollution level lower than what would have been expected under observed weather conditions.
+Source: CREA based on MEE."
+      ))
+
+    d <- file.path(dir_results_plots, "deweathered", "regional")
+    dir.create(d, showWarnings = F, recursive = T)
+    ggsave(file.path(d, paste0("mee_region_anomaly_qtd_",poll,"_",absolute_or_percent,".png")),
+           p,
+           width=8,
+           height=8)
   }
+}
+
+plots.quarter_yoy <- function(m.dew, m.quarterly){
+
+
+  process_id <- "anomaly_offsetted"
+  ylab <- "Year-on-year change [%]"
+
+  m.plot <- m.dew %>%
+    filter(process_id=="anomaly_offsetted",
+           poll=="pm25") %>%
+    mutate(Q=gsub("\\.","Q",as.character(lubridate::quarter(date, with_year = T)))) %>%
+    filter(Q %in% c("2019Q4", "2020Q4")) %>%
+    group_by(keyregion2018, region_id, Q) %>%
+    summarize_at("value", mean, na.rm=T) %>%
+    select(keyregion2018, region_id, Q, value) %>%
+    mutate_at('Q', make.names) %>% spread(Q, value) %>%
+    mutate(QTD_reduction = X2020Q4/X2019Q4-1) %>% select(-starts_with('X')) %>%
+    full_join(m.quarterly %>% filter(source=='target', Q==2020.4) %>%
+                mutate(Q="2020Q4", region_id=tolower(CityEN)) %>%
+                select(region_id, keyregion2018, target_reduction), .) %>%
+    filter(!is.na(target_reduction)) %>%
+    tidyr::pivot_longer(cols=c("target_reduction", "QTD_reduction"), names_to="indicator")
+
+
+  (p <-  ggplot(m.plot %>% mutate(region_name=tools::toTitleCase(region_id))) +
+       geom_bar(stat="identity", aes(value, region_name, fill=indicator), position="dodge") +
+       theme_crea() +
+       rcrea::CREAtheme.scale_fill_crea_d() +
+       labs(
+         y=ylab,
+         x=NULL,
+         title="PM2.5 year-to-date reductions in 2020Q4"
+       ))
+
+    dir.create(d, showWarnings = F, recursive = T)
+    ggsave(file.path(d, paste0("mee_region_yoy_qtd_",poll,"_",absolute_or_percent,".png")),
+           p,
+           width=8,
+           height=8)
 }

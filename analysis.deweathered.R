@@ -11,7 +11,7 @@ duplicated_cities <- utils.check_cities_unique(cities, stations)
 cities <- cities %>% filter(!CityEN %in% duplicated_cities)
 
 
-if(T){
+if(F){
   # To be run on server ideally.
 
   # Unique identifier of city-level data is city and country... which is an issue given
@@ -63,7 +63,7 @@ if(T){
 
 
 # Plot 1: City level
-rcrea::plot_recents(meas_raw=m.dew %>% filter(process_id=="anomaly_percent_gbm_lag1_city_mad"),
+rcrea::plot_recents(meas_raw=m.dew %>% filter(process_id=="anomaly_percent"),
                     running_days = 30,
                     aggregate_level = "city",
                     source="mee",
@@ -74,6 +74,11 @@ rcrea::plot_recents(meas_raw=m.dew %>% filter(process_id=="anomaly_percent_gbm_l
                     subfile_by = "poll",
                     folder=file.path(dir_results_plots, "deweathered", "city"))
 
+
+
+
+
+
 # Regional ----------------------------------------------------------------
 m.dew.regional <- m.dew %>%
   # Average
@@ -82,7 +87,7 @@ m.dew.regional <- m.dew %>%
   filter(!is.na(region_id))
 
 
-rcrea::plot_recents(meas_raw=m.dew.regional %>% filter(process_id=="anomaly_percent_gbm_lag1_city_mad"),
+rcrea::plot_recents(meas_raw=m.dew.regional %>% filter(process_id=="anomaly_percent"),
                     running_days = 30,
                     aggregate_level = "region",
                     source="mee",
@@ -94,7 +99,4 @@ rcrea::plot_recents(meas_raw=m.dew.regional %>% filter(process_id=="anomaly_perc
                     folder=file.path(dir_results_plots, "deweathered", "regional"))
 
 
-
-
-# Custom deweathering ------------------------------------------------------
-
+plots.quarter_anomalies(m.dew.regional, "absolute")
