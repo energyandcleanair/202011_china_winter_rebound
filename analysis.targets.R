@@ -1,4 +1,5 @@
 require(readxl)
+require(lubridate)
 
 m.station.obs = readRDS(file.path(dir_results, "m.station.obs.RDS"))
 targets = read_xlsx('data/winter targets 2020-2021.xlsx') %>%
@@ -72,10 +73,12 @@ bind_rows(m.quarterly %>% filter(source == 'hourly', Q %in% c(2020.2, 2020.3)),
 plots.targets(targetmeans.Q1, targetmeans.Q4, m.keyregions)
 
 
-m.quarterly %>% filter(source == 'hourly', Q %in% c(2019.4, 2020.4)) %>%
-  select(keyregion2018, Province, CityEN, Q, value) %>%
+m.qtd = daily %>% filter(Q %in% c(2019.4, 2020.4), yday(date)<=yday(max(daily$date)))
+means.qtd = m.qtd %>% group_by(keyregion2018, Province, CityEN, Q) %>% summarise_at('value', mean, na.rm=T)
+means.qtd = m.qtd %>% group_by(keyregion2018, Q) %>% summarise_at('value', mean, na.rm=T) %>% bind_rows(means.qtd)
+means.qtd %>%
   mutate_at('Q', make.names) %>% spread(Q, value) %>%
   mutate(QTD_reduction = X2020.4/X2019.4-1) %>% select(-starts_with('X')) %>%
   full_join(m.quarterly %>% filter(source=='target', Q==2020.4) %>%
-              select(CityEN, Province, keyregion2018, target_reduction), .)
+              select(CityEN, Province, keyregion2018, target_reduction), .) %>% filter(is.na(CityEN))
 
