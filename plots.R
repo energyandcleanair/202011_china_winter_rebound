@@ -28,3 +28,81 @@ plots.compare_past_years <- function(m, poll, folder=NULL){
   return(p)
 
 }
+
+
+plots.targets <- function(targetmeans.Q1, targetmeans.Q4, m.keyregions){
+
+m <- m.keyregions %>%
+  filter(!is.na(region_id)) %>%
+  rcrea::utils.running_average(365) %>%
+  mutate(type="Observations") %>%
+  select(region_id, date, value, type)
+
+t1 <-targetmeans.Q1 %>%
+  mutate(date=as.Date("2020-03-31")) %>%
+  group_by(region_id=keyregion2018, date) %>%
+  summarise_at("value", mean, na.rm=T) %>%
+  mutate(type="Target")
+
+t4 <-targetmeans.Q4 %>%
+  mutate(date=as.Date("2020-12-31")) %>%
+  group_by(region_id=keyregion2018, date) %>%
+  summarise_at("value", mean, na.rm=T) %>%
+  mutate(type="Target")
+
+lv <- m %>%
+  filter(date==max(date)) %>%
+  select(region_id, date, value, type) %>%
+  bind_rows(t4) %>%
+  mutate(type="Target")
+
+(p <- ggplot(m, aes(date, value, col=type, linetype=type)) +
+  geom_line(size=1) +
+  geom_point(data=bind_rows(t1,t4)) +
+  geom_line(data=lv, size=1) +
+  facet_wrap(~region_id) +
+  rcrea::theme_crea() +
+  scale_x_date(limits=as.Date(c("2020-01-01","2020-12-31")),
+               breaks=seq(as.Date("2020-01-01"), as.Date("2021-01-01"), by="3 month"),
+               date_labels="%b %Y"
+               ) +
+  scale_y_continuous(limits=c(0, NA), expand=expansion(mult=c(0,.05))) +
+  theme(legend.position = 'bottom',
+        panel.grid.minor.x = element_line(colour = "grey90")) +
+  scale_linetype_discrete(name='', guide = guide_legend(ncol=2)) +
+  scale_color_manual(name='', values=c('black', 'darkred')) +
+
+  labs(title="Are key regions on track?",
+       subtitle="Rolling 12-month mean PM2.5 level and path to 2019-2020 winter PM2.5 target",
+       y="PM2.5 concentration [µg/m3]",
+       x=NULL))
+
+d <- file.path(dir_results_plots, "regional", "EN")
+dir.create(d, showWarnings = F, recursive = T)
+ggsave(file.path(d, "target_regional.png"),
+       width=10,
+       height=10)
+}
+
+#WIP
+plots.quarter_anomalies <- function(m.dew.regional){
+
+  m.plot <- m.dew.regional %>%
+    filter(process_id=="anomaly_gbm_lag1_city_mad",
+           date>="2020-01-01") %>%# Anomaly in absolute terms
+    mutate(Q=gsub("\\.","Q",as.character(lubridate::quarter(date, with_year = T)))) %>%
+    group_by(poll, region_id, process_id, Q) %>%
+    summarize_at("value", mean, na.rm=T)
+
+  polls <- unique(m.plot$poll)
+  for(poll in polls){
+    p <-  ggplot(m.plot %>% filter(poll)) +
+      geom_bar(stat="identity", aes(Q, value)) +
+      facet_wrap(poll~region_id) +
+      theme_crea() +
+      labs(
+        y="Anomaly [µg/m3]",
+        x=NULL
+      )
+  }
+}

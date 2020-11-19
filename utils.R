@@ -38,3 +38,7 @@ utils.replace_w_chinese <- function(m, stations){
       region_name=region_id) %>%
     select(-c(CityEN, CityZH))
 }
+
+utils.deweathered_regions <- function(m.deweathered.city, m.deweathered.stations){
+
+}

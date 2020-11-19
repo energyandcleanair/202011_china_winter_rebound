@@ -113,6 +113,7 @@ if(F){
   m.station.obs <- readRDS(file.path(dir_results, "m.station.obs.RDS"))
 }else{
   station_ids <- stations %>% filter(!is.na(keyregion2018)) %>% pull(station_code)
+  station_ids <- stations %>% filter(!is.na(keyregion2018)) %>% pull(station_code)
   m.station.obs <- rcrea::measurements(source="mee",
                                        location_id=station_ids,
                                        process_id="station_day_mad",

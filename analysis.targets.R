@@ -8,10 +8,15 @@ targets = read_xlsx('data/winter targets 2020-2021.xlsx') %>%
 #daily average PM2.5 by station
 m.station.obs %>% filter(poll=='pm25', date>='2019-01-01') %>%
   mutate(date=as.Date(date), region_id=toupper(region_id)) %>%
-  group_by(stationID=region_id, poll, date) %>% summarise_at('value', mean, na.rm=T) %>%
+  group_by(stationID=region_id, poll, date, process_id, timezone, unit, source) %>%
+  summarise_at('value', mean, na.rm=T) %>%
   left_join(stations) %>%
   mutate(Q=lubridate::quarter(date, with_year = T)) ->
   daily
+
+m.keyregions <- daily %>%
+  group_by(region_id=keyregion2018, process_id, date, poll, timezone, unit, source) %>%
+  summarise_at('value', mean, na.rm=T)
 
 #quarterly averages by city
 daily %>% group_by(Province, CityEN, keyregion2018, poll, Q) %>% summarise_at('value', mean, na.rm=T) ->
@@ -57,7 +62,11 @@ bind_rows(m.quarterly %>% filter(source == 'hourly', Q %in% c(2020.2, 2020.3)),
           m.quarterly %>% filter(source == 'target', Q %in% c(2020.4, 2021.1))) %>%
   group_by(CityEN, Province, keyregion2018) %>% summarise_at('value', mean) -> targetmeans.Q1
 
-#TO DO: make one year running mean plots with the target for end of Q4 and Q1 marked as points, and linear path from latest value to targets
+
+#One year running mean plots with the target for end of Q4 and Q1 marked as points, and linear path from latest value to targets
+# DONE
+plots.targets(targetmeans.Q1, targetmeans.Q4, m.keyregions)
+
 
 m.quarterly %>% filter(source == 'hourly', Q %in% c(2019.4, 2020.4)) %>%
   select(keyregion2018, Province, CityEN, Q, value) %>%
@@ -66,4 +75,3 @@ m.quarterly %>% filter(source == 'hourly', Q %in% c(2019.4, 2020.4)) %>%
   full_join(m.quarterly %>% filter(source=='target', Q==2020.4) %>%
               select(CityEN, Province, keyregion2018, target_reduction), .)
 
-#TO DO: add weather-controlled YoY QTD values, and make tables or column plots
