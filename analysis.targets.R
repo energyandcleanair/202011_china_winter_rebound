@@ -54,13 +54,14 @@ m.quarterly %<>% filter(source=='hourly') %>%
                         (1 + target_reduction) * value_base,
                         value))
 
+mean4=function(x) ifelse(length(x)==4,mean(x), NA)
 bind_rows(m.quarterly %>% filter(source == 'hourly', Q %in% c(2020.1, 2020.2, 2020.3)),
           m.quarterly %>% filter(source == 'target', Q %in% c(2020.4))) %>%
-  group_by(CityEN, Province, keyregion2018) %>% summarise_at('value', mean) -> targetmeans.Q4
+  group_by(CityEN, Province, keyregion2018) %>% summarise_at('value', mean4) -> targetmeans.Q4
 
 bind_rows(m.quarterly %>% filter(source == 'hourly', Q %in% c(2020.2, 2020.3)),
           m.quarterly %>% filter(source == 'target', Q %in% c(2020.4, 2021.1))) %>%
-  group_by(CityEN, Province, keyregion2018) %>% summarise_at('value', mean) -> targetmeans.Q1
+  group_by(CityEN, Province, keyregion2018) %>% summarise_at('value', mean4) -> targetmeans.Q1
 
 
 #One year running mean plots with the target for end of Q4 and Q1 marked as points, and linear path from latest value to targets
