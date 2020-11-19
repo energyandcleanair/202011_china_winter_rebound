@@ -39,7 +39,7 @@ m <- m.keyregions %>%
   select(region_id, date, value, type)
 
 t1 <-targetmeans.Q1 %>%
-  mutate(date=as.Date("2020-03-31")) %>%
+  mutate(date=as.Date("2021-03-31")) %>%
   group_by(region_id=keyregion2018, date) %>%
   summarise_at("value", mean, na.rm=T) %>%
   mutate(type="Target")
@@ -59,11 +59,12 @@ lv <- m %>%
 (p <- ggplot(m, aes(date, value, col=type, linetype=type)) +
   geom_line(size=1) +
   geom_point(data=bind_rows(t1,t4)) +
+  geom_line(data=bind_rows(t1,t4), size=1) +
   geom_line(data=lv, size=1) +
   facet_wrap(~region_id) +
   rcrea::theme_crea() +
-  scale_x_date(limits=as.Date(c("2020-01-01","2020-12-31")),
-               breaks=seq(as.Date("2020-01-01"), as.Date("2021-01-01"), by="3 month"),
+  scale_x_date(limits=as.Date(c("2020-01-01","2021-04-15")),
+               breaks=seq(as.Date("2020-01-01"), as.Date("2021-04-15"), by="3 month"),
                date_labels="%b %Y"
                ) +
   scale_y_continuous(limits=c(0, NA), expand=expansion(mult=c(0,.05))) +
@@ -80,8 +81,8 @@ lv <- m %>%
 d <- file.path(dir_results_plots, "regional", "EN")
 dir.create(d, showWarnings = F, recursive = T)
 ggsave(file.path(d, "target_regional.png"),
-       width=10,
-       height=10)
+       width=8,
+       height=8)
 }
 
 #WIP
