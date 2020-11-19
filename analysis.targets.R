@@ -14,7 +14,7 @@ m.station.obs %>% filter(poll=='pm25', date>='2019-01-01') %>%
   mutate(Q=lubridate::quarter(date, with_year = T)) ->
   daily
 
-m.keyregions <- daily %>%
+m.keyregions <- daily %>% filter(!is.na(keyregion2018), keyregion2018 != 'PRD') %>%
   group_by(region_id=keyregion2018, process_id, date, poll, timezone, unit, source) %>%
   summarise_at('value', mean, na.rm=T)
 
