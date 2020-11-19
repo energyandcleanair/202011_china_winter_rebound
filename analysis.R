@@ -117,7 +117,7 @@ if(F){
   m.station.obs <- rcrea::measurements(source="mee",
                                        location_id=station_ids,
                                        process_id="station_day_mad",
-                                       date_from="2018-12-01",
+                                       date_from="2018-10-01",
                                        poll=c(rcrea::PM25, rcrea::NO2, rcrea::SO2, rcrea::O3),
                                        deweathered = F)
 

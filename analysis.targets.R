@@ -15,7 +15,10 @@ m.station.obs %>% filter(poll=='pm25', date>='2019-01-01') %>%
   mutate(Q=lubridate::quarter(date, with_year = T)) ->
   daily
 
-m.keyregions <- daily %>% filter(!is.na(keyregion2018), keyregion2018 != 'PRD') %>%
+m.keyregions <- m.station.obs %>%
+  left_join(stations %>% mutate(region_id=tolower(station_code))) %>%
+  filter(!is.na(keyregion2018)) %>%
+  mutate(date=as.Date(date)) %>%
   group_by(region_id=keyregion2018, process_id, date, poll, timezone, unit, source) %>%
   summarise_at('value', mean, na.rm=T)
 
@@ -37,7 +40,6 @@ targets %>% select(keyregion2018, Province, CityEN, Q=target_period, base_period
 #add official monthly averaged data from MEE
 targets %>% select(keyregion2018, Province, CityEN, Q=base_period, value=base_PM25) %>%
   mutate(source='monthly') %>% bind_rows(m.quarterly) -> m.quarterly
-
 
 
 
@@ -69,16 +71,20 @@ bind_rows(m.quarterly %>% filter(source == 'hourly', Q %in% c(2020.2, 2020.3)),
 
 
 #One year running mean plots with the target for end of Q4 and Q1 marked as points, and linear path from latest value to targets
-# DONE
-plots.targets(targetmeans.Q1, targetmeans.Q4, m.keyregions)
+plots.targets_ts(targetmeans.Q1, targetmeans.Q4, m.keyregions)
 
-
-m.qtd = daily %>% filter(Q %in% c(2019.4, 2020.4), yday(date)<=yday(max(daily$date)))
+max.date <- max(daily$date)
+m.qtd = daily %>% filter(Q %in% c(2019.4, 2020.4), yday(date)<=yday(max.date))
 means.qtd = m.qtd %>% group_by(keyregion2018, Province, CityEN, Q) %>% summarise_at('value', mean, na.rm=T)
 means.qtd = m.qtd %>% group_by(keyregion2018, Q) %>% summarise_at('value', mean, na.rm=T) %>% bind_rows(means.qtd)
-means.qtd %>%
+
+t.keyregions <- means.qtd %>%
   mutate_at('Q', make.names) %>% spread(Q, value) %>%
   mutate(QTD_reduction = X2020.4/X2019.4-1) %>% select(-starts_with('X')) %>%
   full_join(m.quarterly %>% filter(source=='target', Q==2020.4) %>%
               select(CityEN, Province, keyregion2018, target_reduction), .) %>% filter(is.na(CityEN))
+
+plots.targets_col(t.keyregions)
+
+plots.targets_yoyts_vs_targets(m.keyregions, t.keyregions)
 
