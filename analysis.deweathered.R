@@ -84,10 +84,14 @@ rcrea::plot_recents(meas_raw=m.dew.regional %>% filter(process_id=="anomaly_perc
 
 
 # Custom deweathering ------------------------------------------------------
-# require(creadeweather)
-# d <- creadeweather::deweather(source="mee",
-#                               poll="pm25",
-#                               output="anomaly",
-#                               upload_results = F,
-#                               training_start_anomaly = "2017-03-01")
+require(creadeweather)
+m.dew.city.manual.pm25 <- creadeweather::deweather(source="mee",
+                                              city=cities$CityEN,
+                                              poll="pm25",
+                                              output="anomaly",
+                                              upload_results = F,
+                                              years_force_refresh = NULL,
+                                              training_start_anomaly = "2017-04-01",
+                                              training_end_anomaly = "2019-09-30")
+
 
