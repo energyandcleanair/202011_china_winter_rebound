@@ -34,7 +34,7 @@ if(T){
     tidyr::unnest(normalised) %>%
     select(-c(process_deweather, process_id, predicted)) %>%
     left_join(stations %>% mutate(region_id=tolower(CityEN))) %>%
-    select(region_id, date, poll, unit, process_id=output, CityZH, keyregion2018, value)
+    select(region_id, date, poll, unit, process_id=output, CityZH, Province, keyregion2018, value)
 
 
   m.dew.station.raw <- creadeweather::deweather(source="mee",
@@ -52,7 +52,7 @@ if(T){
     select(-c(process_deweather, process_id, predicted)) %>%
     left_join(stations %>% mutate(region_id=tolower(station_code))) %>%
     mutate(region_id=tolower(CityEN)) %>%
-    group_by(region_id, date, poll, unit, process_id=output, CityZH, keyregion2018) %>%
+    group_by(region_id, date, poll, unit, process_id=output, CityZH, Province, keyregion2018) %>%
     summarize_at("value", mean, na.rm=T)
 
   m.dew <- bind_rows(m.dew.city, m.dew.station)
