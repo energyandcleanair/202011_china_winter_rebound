@@ -7,7 +7,7 @@ targets = read_xlsx('data/winter targets 2020-2021.xlsx') %>%
   mutate_at(c('target_period', 'base_period'), function(x) x %>% gsub('Q', '\\.', .) %>% as.numeric)
 
 #daily average PM2.5 by station
-m.station.obs %>% filter(poll=='pm25', date>='2019-01-01') %>%
+m.station.obs %>% filter(date>='2019-01-01') %>%
   mutate(date=as.Date(date), region_id=toupper(region_id)) %>%
   group_by(stationID=region_id, poll, date, process_id, timezone, unit, source) %>%
   summarise_at('value', mean, na.rm=T) %>%
@@ -20,11 +20,12 @@ m.keyregions <- daily %>% filter(!is.na(keyregion2018), keyregion2018 != 'PRD') 
   summarise_at('value', mean, na.rm=T)
 
 #quarterly averages by city
-daily %>% group_by(Province, CityEN, keyregion2018, poll, Q) %>% summarise_at('value', mean, na.rm=T) ->
+daily %>% filter(poll=='pm25') %>%
+  group_by(Province, CityEN, keyregion2018, poll, Q) %>% summarise_at('value', mean, na.rm=T) ->
   m.quarterly
 
 #quarterly averages by key region
-daily %>%
+daily %>% filter(poll=='pm25') %>%
   group_by(keyregion2018, poll, Q) %>% summarise_at('value', mean, na.rm=T) %>%
   bind_rows(m.quarterly) %>%
   filter(!is.na(keyregion2018)) %>%
@@ -72,13 +73,33 @@ bind_rows(m.quarterly %>% filter(source == 'hourly', Q %in% c(2020.2, 2020.3)),
 # DONE
 plots.targets(targetmeans.Q1, targetmeans.Q4, m.keyregions)
 
+max.date <- max(daily$date)
+m.qtd = daily %>% ungroup %>% filter(Q %in% c(2019.4, 2020.4), yday(date)<=yday(max(daily$date)))
+means.qtd = m.qtd %>% group_by(keyregion2018, Province, CityEN, poll, Q) %>% summarise_at('value', mean, na.rm=T)
+means.qtd = m.qtd %>% group_by(keyregion2018, poll, Q) %>% summarise_at('value', mean, na.rm=T) %>% bind_rows(means.qtd)
+means.qtd = m.qtd %>% group_by(poll, Q) %>% summarise_at('value', mean, na.rm=T) %>%
+  mutate(keyregion2018='National') %>% bind_rows(means.qtd)
+means.qtd$keyregion2018[is.na(means.qtd$keyregion2018)] <- 'Other regions'
 
-m.qtd = daily %>% filter(Q %in% c(2019.4, 2020.4), yday(date)<=yday(max(daily$date)))
-means.qtd = m.qtd %>% group_by(keyregion2018, Province, CityEN, Q) %>% summarise_at('value', mean, na.rm=T)
-means.qtd = m.qtd %>% group_by(keyregion2018, Q) %>% summarise_at('value', mean, na.rm=T) %>% bind_rows(means.qtd)
 means.qtd %>%
   mutate_at('Q', make.names) %>% spread(Q, value) %>%
-  mutate(QTD_reduction = X2020.4/X2019.4-1) %>% select(-starts_with('X')) %>%
+  mutate(QTD_reduction = X2020.4/X2019.4-1) %>% select(-starts_with('X')) -> qtd.yoy
+
+t.keyregions <- qtd.yoy %>%
   full_join(m.quarterly %>% filter(source=='target', Q==2020.4) %>%
-              select(CityEN, Province, keyregion2018, target_reduction), .) %>% filter(is.na(CityEN))
+              select(CityEN, Province, keyregion2018, target_reduction), .) %>%
+  mutate(Q=2020.4) %>%
+  bind_rows(m.quarterly %>%
+              filter(source=='target', Q==2021.1) %>%
+              select(CityEN, Province, keyregion2018, target_reduction, Q)) %>%
+  filter(is.na(CityEN), !is.na(target_reduction))
+
+plots.targets_col(t.keyregions)
+
+plots.targets_yoyts_vs_targets(m.keyregions, t.keyregions)
+
+qtd.yoy %>% filter(is.na(CityEN)) %>%
+  mutate_at('poll',toupper) %>% mutate_at('QTD_reduction', scales::percent, accuracy=.1) %>%
+  spread(poll, QTD_reduction)
+
 

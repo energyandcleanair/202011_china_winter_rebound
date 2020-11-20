@@ -29,7 +29,11 @@ plots.compare_past_years <- function(m, poll, folder=NULL, width=14, height=12, 
 
 }
 
-plots.targets <- function(targetmeans.Q1, targetmeans.Q4, m.keyregions, nrow=2, width=7.5,height=7.5, dpi=270, ...){
+
+# Targets -----------------------------------------------------------------
+
+
+plots.targets_ts <- function(targetmeans.Q1, targetmeans.Q4, m.keyregions, nrow=2, width=7.5,height=7.5, dpi=270, ...){
 
   m <- m.keyregions %>%
     filter(!is.na(region_id)) %>%
@@ -84,7 +88,128 @@ plots.targets <- function(targetmeans.Q1, targetmeans.Q4, m.keyregions, nrow=2, 
          width=width, height=height, dpi=dpi, ...)
 }
 
-#WIP
+plots.targets_col <- function(t.keyregions, nrow=2, width=7.5,height=7.5, dpi=270, ...){
+
+  d <- t.keyregions %>% select(keyregion2018, `Target`=target_reduction, `Quarter-to-Date`=QTD_reduction) %>%
+    gather("type","value",-keyregion2018) %>%
+    filter(!is.na(keyregion2018))
+
+  ggplot(d) +
+    geom_bar(stat="identity", aes(type, value, fill=type)) +
+    facet_wrap(~keyregion2018) +
+    theme_crea() +
+    scale_y_continuous(labels=scales::percent) +
+    geom_hline(yintercept=0) +
+    rcrea::CREAtheme.scale_fill_crea_d(name=NULL) +
+    labs("Year-on-year varition of PM2.5 levels in 2020Q4",
+         y="Year-on-year change")
+
+  d <- file.path(dir_results_plots, "regional", "EN")
+  dir.create(d, showWarnings = F, recursive = T)
+  ggsave(file.path(d, "target_regional_cols.png"),
+         width=width, height=height, dpi=dpi, ...)
+
+}
+
+
+plots.targets_yoyts_vs_targets <- function(m.keyregions, t.keyregions,
+                                           folder=file.path(dir_results_plots, "regional", "EN"),
+                                           nrow=2, width=7.5,height=7.5, dpi=270, ...){
+
+  poll <- "pm25"
+
+  m <- m.keyregions %>%
+    filter(!is.na(region_id),
+           date>="2018-10-01",
+           poll==!!poll) %>%
+    rcrea::utils.running_average(90) %>%
+    filter(date>="2019-01-01") %>%
+    mutate(year=lubridate::year(date),
+           date = `year<-`(date, 0)) %>%
+    spread(year, value) %>%
+    mutate(value=`2020`/`2019`-1) %>%
+    mutate(date=`year<-`(date, 2020),
+           type="Observations") %>%
+    select(region_id, poll, date, value, type) %>%
+    filter(!is.na(region_id))
+
+  t <- t.keyregions %>%
+    select(region_id=keyregion2018, value=target_reduction, Q) %>%
+    mutate(date=recode(as.character(Q),
+                       "2020.4"=as.Date("2020-12-31"),
+                       "2021.1"=as.Date("2021-03-31")),
+           type="Target",
+           poll="pm25") %>%
+    bind_rows(.,
+      m %>%
+      # filter(date==max(max(m.keyregions$date)))) %>%
+      filter(date=='2020-10-01')) %>%
+      mutate(type="Target")
+
+  rect.target <- t %>%
+    filter(type=="Target", !is.na(value), !is.na(region_id)) %>%
+    arrange(date) %>%
+    bind_rows(
+      mutate(., ymin=value) %>% arrange(desc(date)),
+      .
+    ) %>%
+    arrange(region_id)
+
+  m <- bind_rows(m, t) %>%
+    filter(!is.na(region_id))
+
+  # scale parameters
+  ymin <- min(m$value, na.rm=T) * 1.1
+  maxabs <- max(abs(m$value), na.rm=T)
+  chg_colors <- c("#35416C", "#8CC9D0", "darkgray", "#CC0000", "#990000")
+
+
+  (p <- ggplot() +
+    # geom_polygon(data=rect.target, aes(x=date, y=value,fill=type, alpha=type)) +
+    geom_line(data=m %>% filter(type=="Observations"),
+                aes(date, value, col=value), linetype="solid", size=0.7) +
+    geom_line(data=m %>% filter(type=="Target"),
+                  aes(date, value),col="darkred", linetype="dashed", size=0.7) +
+    # To force legend
+    geom_line(data=m %>% distinct(type, .keep_all = T), aes(date, value, linetype=type)) +
+
+    facet_wrap(~region_id, nrow=nrow) +
+    geom_hline(yintercept=0) +
+    # geom_point(data=rect.target, aes(date,value,col=type)) +
+    theme_crea() +
+    theme(legend.position = 'bottom',
+          panel.grid.minor.x = element_line(colour = "grey90"),
+          axis.text.x = element_text(angle=25, vjust=.5)) +
+    scale_linetype_discrete(name='', guide = guide_legend(ncol=2)) +
+    # scale_color_manual(name='', values=c('black', 'darkred')) +
+    scale_fill_manual(name='', values=c('darkred')) +
+    scale_alpha_manual(name='', values=c(0.4)) +
+    scale_x_date(limits=as.Date(c("2020-01-01","2021-04-15")),
+                 breaks=seq(as.Date("2020-01-01"), as.Date("2021-04-15"), by="3 month"),
+                 date_labels="%b %Y"
+    ) +
+    scale_y_continuous(limits=c(ymin, NA), labels=scales::percent, expand=expansion(mult=c(0,.05))) +
+    scale_color_gradientn(colors = chg_colors, guide = F, limits=c(-maxabs,maxabs)) +
+    labs(title="Are key regions on track?",
+         subtitle=paste("Year-on-year change in", poll_str(poll), "levels and path to targets"),
+         x=NULL,
+         y="90-day running mean, year-on-year") )
+
+  if(!is.null(folder)) {
+    d <- folder
+    dir.create(d, showWarnings = F, recursive = T)
+    ggsave(file.path(d, paste0("target_regional_90running_", poll,".png")),
+           width=width, height=height, dpi=dpi, ...)
+  }
+
+  return(p)
+}
+
+
+
+# Deweathered -------------------------------------------------------------
+
+
 plots.quarter_anomalies <- function(m.dew.regional, absolute_or_percent="absolute"){
 
   absolute <- absolute_or_percent == "absolute"
