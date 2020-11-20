@@ -29,6 +29,10 @@ plots.compare_past_years <- function(m, poll, folder=NULL, width=14, height=12, 
 
 }
 
+
+# Targets -----------------------------------------------------------------
+
+
 plots.targets_ts <- function(targetmeans.Q1, targetmeans.Q4, m.keyregions, nrow=2, width=7.5,height=7.5, dpi=270, ...){
 
   m <- m.keyregions %>%
@@ -107,7 +111,10 @@ plots.targets_col <- function(t.keyregions, nrow=2, width=7.5,height=7.5, dpi=27
 
 }
 
-plots.targets_yoyts_vs_targets <- function(m.keyregions, t.keyregions, nrow=2, width=7.5,height=7.5, dpi=270, ...){
+
+plots.targets_yoyts_vs_targets <- function(m.keyregions, t.keyregions,
+                                           folder=file.path(dir_results_plots, "regional", "EN"),
+                                           nrow=2, width=7.5,height=7.5, dpi=270, ...){
 
   poll <- "pm25"
 
@@ -125,8 +132,6 @@ plots.targets_yoyts_vs_targets <- function(m.keyregions, t.keyregions, nrow=2, w
            type="Observations") %>%
     select(region_id, poll, date, value, type) %>%
     filter(!is.na(region_id))
-
-  ymin <- min(m$value, na.rm=T) * 1.1
 
   t <- t.keyregions %>%
     select(region_id=keyregion2018, value=target_reduction, Q) %>%
@@ -153,42 +158,54 @@ plots.targets_yoyts_vs_targets <- function(m.keyregions, t.keyregions, nrow=2, w
   m <- bind_rows(m, t) %>%
     filter(!is.na(region_id))
 
+  # scale parameters
+  ymin <- min(m$value, na.rm=T) * 1.1
+  maxabs <- max(abs(m$value), na.rm=T)
+  chg_colors <- c("#35416C", "#8CC9D0", "darkgray", "#CC0000", "#990000")
 
 
-  (p <- ggplot(m %>% filter(!is.na(region_id), type=="Observations")) +
-    geom_polygon(data=rect.target, aes(x=date, y=value,fill=type, alpha=type)) +
-    geom_line(aes(date, value, col=type, linetype=type), size=0.5) +
+  (p <- ggplot() +
+    # geom_polygon(data=rect.target, aes(x=date, y=value,fill=type, alpha=type)) +
+    geom_line(data=m %>% filter(type=="Observations"),
+                aes(date, value, col=value), linetype="solid", size=0.7) +
+    geom_line(data=m %>% filter(type=="Target"),
+                  aes(date, value),col="darkred", linetype="dashed", size=0.7) +
+    # To force legend
+    geom_line(data=m %>% distinct(type, .keep_all = T), aes(date, value, linetype=type)) +
+
     facet_wrap(~region_id, nrow=nrow) +
     geom_hline(yintercept=0) +
     # geom_point(data=rect.target, aes(date,value,col=type)) +
-    scale_y_continuous(labels=scales::percent) +
     theme_crea() +
     theme(legend.position = 'bottom',
           panel.grid.minor.x = element_line(colour = "grey90"),
           axis.text.x = element_text(angle=25, vjust=.5)) +
     scale_linetype_discrete(name='', guide = guide_legend(ncol=2)) +
-    scale_color_manual(name='', values=c('black', 'darkred')) +
+    # scale_color_manual(name='', values=c('black', 'darkred')) +
     scale_fill_manual(name='', values=c('darkred')) +
     scale_alpha_manual(name='', values=c(0.4)) +
     scale_x_date(limits=as.Date(c("2020-01-01","2021-04-15")),
                  breaks=seq(as.Date("2020-01-01"), as.Date("2021-04-15"), by="3 month"),
                  date_labels="%b %Y"
     ) +
-    scale_y_continuous(limits=c(ymin, NA), expand=expansion(mult=c(0,.05))) +
-
+    scale_y_continuous(limits=c(ymin, NA), labels=scales::percent, expand=expansion(mult=c(0,.05))) +
+    scale_color_gradientn(colors = chg_colors, guide = F, limits=c(-maxabs,maxabs)) +
     labs(title="Are key regions on track?",
          subtitle=paste("Y-o-y change of 90-day running mean of", poll_str(poll), "levels"),
          x=NULL,
          y="Year-on-year change") )
 
-
-  d <- file.path(dir_results_plots, "regional", "EN")
+  d <- folder
   dir.create(d, showWarnings = F, recursive = T)
   ggsave(file.path(d, paste0("target_regional_90running_", poll,".png")),
          width=width, height=height, dpi=dpi, ...)
 
   return(p)
 }
+
+
+
+# Deweathered -------------------------------------------------------------
 
 
 plots.quarter_anomalies <- function(m.dew.regional, absolute_or_percent="absolute"){
