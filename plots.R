@@ -123,28 +123,44 @@ plots.targets_yoyts_vs_targets <- function(m.keyregions, t.keyregions, nrow=2, w
     mutate(value=`2020`/`2019`-1) %>%
     mutate(date=`year<-`(date, 2020),
            type="Observations") %>%
-    select(region_id, poll, date, value, type)
+    select(region_id, poll, date, value, type) %>%
+    filter(!is.na(region_id))
 
-  if(poll=="pm25"){
-    t <- t.keyregions %>%
-      select(region_id=keyregion2018, value=target_reduction) %>%
-      mutate(date=as.Date("2020-12-31"),
-             type="Target",
-             poll="pm25") %>%
-      bind_rows(.,
-        m %>%
-        # filter(date==max(max(m.keyregions$date)))) %>%
-        filter(date=='2020-10-01')) %>%
-        mutate(type="Target")
+  ymin <- min(m$value, na.rm=T) * 1.1
 
-    m <- bind_rows(m, t)
-  }
+  t <- t.keyregions %>%
+    select(region_id=keyregion2018, value=target_reduction, Q) %>%
+    mutate(date=recode(as.character(Q),
+                       "2020.4"=as.Date("2020-12-31"),
+                       "2021.1"=as.Date("2021-03-31")),
+           type="Target",
+           poll="pm25") %>%
+    bind_rows(.,
+      m %>%
+      # filter(date==max(max(m.keyregions$date)))) %>%
+      filter(date=='2020-10-01')) %>%
+      mutate(type="Target")
+
+  rect.target <- t %>%
+    filter(type=="Target", !is.na(value), !is.na(region_id)) %>%
+    arrange(date) %>%
+    bind_rows(
+      mutate(., value=ymin) %>% arrange(desc(date)),
+      .
+    ) %>%
+    arrange(region_id)
+
+  m <- bind_rows(m, t) %>%
+    filter(!is.na(region_id))
 
 
-  (p <- ggplot(m %>% filter(!is.na(region_id))) +
+
+  (p <- ggplot(m %>% filter(!is.na(region_id), type=="Observations")) +
+    geom_polygon(data=rect.target, aes(x=date, y=value,fill=type, alpha=type)) +
     geom_line(aes(date, value, col=type, linetype=type), size=0.5) +
     facet_wrap(~region_id, nrow=nrow) +
     geom_hline(yintercept=0) +
+    # geom_point(data=rect.target, aes(date,value,col=type)) +
     scale_y_continuous(labels=scales::percent) +
     theme_crea() +
     theme(legend.position = 'bottom',
@@ -152,11 +168,18 @@ plots.targets_yoyts_vs_targets <- function(m.keyregions, t.keyregions, nrow=2, w
           axis.text.x = element_text(angle=25, vjust=.5)) +
     scale_linetype_discrete(name='', guide = guide_legend(ncol=2)) +
     scale_color_manual(name='', values=c('black', 'darkred')) +
+    scale_fill_manual(name='', values=c('darkred')) +
+    scale_alpha_manual(name='', values=c(0.4)) +
+    scale_x_date(limits=as.Date(c("2020-01-01","2021-04-15")),
+                 breaks=seq(as.Date("2020-01-01"), as.Date("2021-04-15"), by="3 month"),
+                 date_labels="%b %Y"
+    ) +
+    scale_y_continuous(limits=c(ymin, NA), expand=expansion(mult=c(0,.05))) +
+
     labs(title="Are key regions on track?",
          subtitle=paste("Y-o-y change of 90-day running mean of", poll_str(poll), "levels"),
          x=NULL,
-         y="Year-on-year change") +
-    rcrea::CREAtheme.scale_fill_crea_d())
+         y="Year-on-year change") )
 
 
   d <- file.path(dir_results_plots, "regional", "EN")
@@ -164,6 +187,7 @@ plots.targets_yoyts_vs_targets <- function(m.keyregions, t.keyregions, nrow=2, w
   ggsave(file.path(d, paste0("target_regional_90running_", poll,".png")),
          width=width, height=height, dpi=dpi, ...)
 
+  return(p)
 }
 
 

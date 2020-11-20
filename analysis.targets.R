@@ -82,7 +82,16 @@ t.keyregions <- means.qtd %>%
   mutate_at('Q', make.names) %>% spread(Q, value) %>%
   mutate(QTD_reduction = X2020.4/X2019.4-1) %>% select(-starts_with('X')) %>%
   full_join(m.quarterly %>% filter(source=='target', Q==2020.4) %>%
-              select(CityEN, Province, keyregion2018, target_reduction), .) %>% filter(is.na(CityEN))
+              select(CityEN, Province, keyregion2018, target_reduction), .) %>%
+  mutate(Q=2020.4) %>%
+  bind_rows(
+    .,
+    m.quarterly %>%
+      filter(source=='target', Q==2021.1) %>%
+      select(CityEN, Province, keyregion2018, target_reduction, Q)
+  ) %>%
+  filter(is.na(CityEN))
+
 
 plots.targets_col(t.keyregions)
 
