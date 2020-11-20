@@ -129,6 +129,7 @@ rcrea::plot_recents(meas_raw=m.equivalent,
 
 
 plots.quarter_anomalies(m.dew.regional, "absolute", folder=file.path(dir_results_plots, "deweathered", "regional"))
+plots.quarter_anomalies(m.dew.regional, "relative", folder=file.path(dir_results_plots, "deweathered", "regional"))
 
 
 # Regional with targets ---------------------------------------------------
