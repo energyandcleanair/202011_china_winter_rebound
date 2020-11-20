@@ -28,7 +28,7 @@ if(F){
                                                      upload_results = F,
                                                      years_force_refresh = NULL,
                                                      training_start_anomaly = "2017-04-01",
-                                                     training_end_anomaly = "2019-09-30")
+                                                     training_end_anomaly = "2019-06-30")
 
   m.dew.city <- m.dew.city.raw %>%
     tidyr::unnest(normalised) %>%
@@ -45,7 +45,7 @@ if(F){
                                                         upload_results = F,
                                                         years_force_refresh = NULL,
                                                         training_start_anomaly = "2017-04-01",
-                                                        training_end_anomaly = "2019-09-30")
+                                                        training_end_anomaly = "2019-06-30")
 
   m.dew.station <-  m.dew.station.raw %>%
     tidyr::unnest(normalised) %>%
