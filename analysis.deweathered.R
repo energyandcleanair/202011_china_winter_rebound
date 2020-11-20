@@ -28,7 +28,7 @@ if(F){
                                                      upload_results = F,
                                                      years_force_refresh = NULL,
                                                      training_start_anomaly = "2017-04-01",
-                                                     training_end_anomaly = "2019-09-30")
+                                                     training_end_anomaly = "2019-06-30")
 
   m.dew.city <- m.dew.city.raw %>%
     tidyr::unnest(normalised) %>%
@@ -45,7 +45,7 @@ if(F){
                                                         upload_results = F,
                                                         years_force_refresh = NULL,
                                                         training_start_anomaly = "2017-04-01",
-                                                        training_end_anomaly = "2019-09-30")
+                                                        training_end_anomaly = "2019-06-30")
 
   m.dew.station <-  m.dew.station.raw %>%
     tidyr::unnest(normalised) %>%
@@ -65,6 +65,7 @@ if(F){
 
 
 # Plot 1: City level
+
 rcrea::plot_recents(meas_raw=m.dew %>% filter(process_id=="anomaly_percent"),
                     running_days = 30,
                     aggregate_level = "city",
@@ -108,7 +109,13 @@ ggplot(m.sanity %>% rcrea::utils.running_average(30), aes(date,value)) +
   facet_wrap(~region_id, scales="free_y")
 
 
-rcrea::plot_recents(meas_raw=m.dew.regional %>% filter(process_id=="anomaly_percent"),
+m.equivalent <-
+  bind_rows(
+    m.keyregions %>% filter(date<=min(m.dew$date)),
+    m.dew.regional %>% filter(process_id=="anomaly_percent"))
+
+
+rcrea::plot_recents(meas_raw=m.equivalent,
                     running_days = 30,
                     aggregate_level = "region",
                     source="mee",
@@ -120,20 +127,16 @@ rcrea::plot_recents(meas_raw=m.dew.regional %>% filter(process_id=="anomaly_perc
                     folder=file.path(dir_results_plots, "deweathered", "regional"))
 
 
-plots.quarter_anomalies(m.dew.regional, "absolute", folder=file.path(dir_results_plots, "deweathered", "regional"))
 
+plots.quarter_anomalies(m.dew.regional, "absolute", folder=file.path(dir_results_plots, "deweathered", "regional"))
 
 
 # Regional with targets ---------------------------------------------------
 
-m.combined <-
-  bind_rows(
-    m.keyregions %>% filter(date<=min(m.dew.regional[m.dew.regional$process_id=="anomaly_offsetted",]$date)),
-    m.dew.regional %>% filter(process_id=="anomaly_offsetted")) %>%
-  mutate(date=as.Date(date))
-
-
 plots.targets_yoyts_vs_targets(
-  m.keyregions=m.combined,
+  m.keyregions=m.dew.regional %>%
+    filter(process_id=="anomaly_offsetted") %>%
+    mutate(date=as.Date(date)) %>%
+    ungroup(),
   t.keyregions,
   folder=file.path(dir_results_plots, "deweathered", "regional"))

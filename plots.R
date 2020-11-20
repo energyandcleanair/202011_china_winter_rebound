@@ -29,7 +29,11 @@ plots.compare_past_years <- function(m, poll, folder=NULL, width=14, height=12, 
 
 }
 
-plots.targets <- function(targetmeans.Q1, targetmeans.Q4, m.keyregions, nrow=2, width=7.5,height=7.5, dpi=270, ...){
+
+# Targets -----------------------------------------------------------------
+
+
+plots.targets_ts <- function(targetmeans.Q1, targetmeans.Q4, m.keyregions, nrow=2, width=7.5,height=7.5, dpi=270, ...){
 
   m <- m.keyregions %>%
     filter(!is.na(region_id)) %>%
@@ -187,14 +191,16 @@ plots.targets_yoyts_vs_targets <- function(m.keyregions, t.keyregions,
     scale_y_continuous(limits=c(ymin, NA), labels=scales::percent, expand=expansion(mult=c(0,.05))) +
     scale_color_gradientn(colors = chg_colors, guide = F, limits=c(-maxabs,maxabs)) +
     labs(title="Are key regions on track?",
-         subtitle=paste("Y-o-y change of 90-day running mean of", poll_str(poll), "levels"),
+         subtitle=paste("Year-on-year change in", poll_str(poll), "levels and path to targets"),
          x=NULL,
-         y="Year-on-year change") )
+         y="90-day running mean, year-on-year") )
 
-  d <- folder
-  dir.create(d, showWarnings = F, recursive = T)
-  ggsave(file.path(d, paste0("target_regional_90running_", poll,".png")),
-         width=width, height=height, dpi=dpi, ...)
+  if(!is.null(folder)) {
+    d <- folder
+    dir.create(d, showWarnings = F, recursive = T)
+    ggsave(file.path(d, paste0("target_regional_90running_", poll,".png")),
+           width=width, height=height, dpi=dpi, ...)
+  }
 
   return(p)
 }
@@ -202,6 +208,7 @@ plots.targets_yoyts_vs_targets <- function(m.keyregions, t.keyregions,
 
 
 # Deweathered -------------------------------------------------------------
+
 
 
 plots.quarter_anomalies <- function(m.dew.regional,
