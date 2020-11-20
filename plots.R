@@ -29,11 +29,7 @@ plots.compare_past_years <- function(m, poll, folder=NULL, width=14, height=12, 
 
 }
 
-
-# Targets -----------------------------------------------------------------
-
-
-plots.targets_ts <- function(targetmeans.Q1, targetmeans.Q4, m.keyregions, nrow=2, width=7.5,height=7.5, dpi=270, ...){
+plots.targets <- function(targetmeans.Q1, targetmeans.Q4, m.keyregions, nrow=2, width=7.5,height=7.5, dpi=270, ...){
 
   m <- m.keyregions %>%
     filter(!is.na(region_id)) %>%

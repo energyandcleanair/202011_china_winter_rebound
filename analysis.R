@@ -112,9 +112,10 @@ plots.compare_past_years(m.obs,
 if(F){
   m.station.obs <- readRDS(file.path(dir_results, "m.station.obs.RDS"))
 }else{
-  # station_ids <- stations %>% filter(!is.na(keyregion2018)) %>% pull(station_code)
+  station_ids <- stations %>% filter(!is.na(keyregion2018)) %>% pull(station_code)
+  station_ids <- stations %>% filter(!is.na(keyregion2018)) %>% pull(station_code)
   m.station.obs <- rcrea::measurements(source="mee",
-                                       # location_id=station_ids,
+                                       location_id=station_ids,
                                        process_id="station_day_mad",
                                        date_from="2017-03-01",
                                        poll=c(rcrea::PM25, rcrea::NO2, rcrea::SO2, rcrea::O3),
@@ -136,7 +137,7 @@ m.region <- m.station.obs.rich %>%
          region_name=tools::toTitleCase(region_id))
 
 
-# Plot 1: key regions, YOY 30-day
+# Plot 1: YOY 30-day
 rcrea::plot_recents(meas_raw=m.region %>% filter(date>="2018-12-01"),
                     type="yoy-relative",
                     subfile_by = "poll",
@@ -150,7 +151,8 @@ rcrea::plot_recents(meas_raw=m.region %>% filter(date>="2018-12-01"),
 )
 
 
-# Plot 2: National, YOY 30 day
+# National ----------------------------------------------------------------
+
 m.national <- m.station.obs %>%
   group_by(date, poll, unit, region_id="china", process_id, source, timezone) %>%
   summarise(value=mean(value, na.rm=T)) %>%
@@ -166,5 +168,5 @@ rcrea::plot_recents(meas_raw=m.national %>% filter(date>="2018-11-30"),
                     color_by="value",
                     size="l",
                     source="mee",
-                    folder = folder
+                    folder = file.path(dir_results_plots, "national")
 )

@@ -65,7 +65,6 @@ if(F){
 
 
 # Plot 1: City level
-
 rcrea::plot_recents(meas_raw=m.dew %>% filter(process_id=="anomaly_percent"),
                     running_days = 30,
                     aggregate_level = "city",
@@ -89,12 +88,17 @@ m.dew.regional <- m.dew %>%
   summarise_at("value", mean, na.rm=T) %>%
   filter(!is.na(region_id))
 
+m.regions.obs <- m.obs %>%
+  left_join(stations %>% mutate(region_id=tolower(CityEN)) %>% distinct(region_id, keyregion2018)) %>%
+  filter(!is.na(keyregion2018)) %>%
+  group_by(region_id=keyregion2018, process_id, date=as.Date(date), poll, timezone, unit, source) %>%
+  summarise_at('value', mean, na.rm=T)
 
 # Sanity check
 
 m.sanity <-
   bind_rows(
-    m.keyregions %>% mutate(type="Observations"),
+    m.regions.obs %>% mutate(type="Observations"),
     m.dew.regional %>% filter(process_id=="anomaly_offsetted") %>% mutate(type="Deweathered"),
     m.dew.regional %>% filter(process_id=="anomaly_counterfactual") %>% mutate(type="Counterfactual")) %>%
   filter(poll=="pm25")
@@ -104,7 +108,7 @@ ggplot(m.sanity %>% rcrea::utils.running_average(30), aes(date,value)) +
   facet_wrap(~region_id, scales="free_y")
 
 
-rcrea::plot_recents(meas_raw=m.dew.regional %>% filter(process_id="anomaly"),
+rcrea::plot_recents(meas_raw=m.dew.regional %>% filter(process_id=="anomaly_percent"),
                     running_days = 30,
                     aggregate_level = "region",
                     source="mee",
@@ -133,4 +137,3 @@ plots.targets_yoyts_vs_targets(
   m.keyregions=m.combined,
   t.keyregions,
   folder=file.path(dir_results_plots, "deweathered", "regional"))
-
