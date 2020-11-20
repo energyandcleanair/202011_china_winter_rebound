@@ -15,10 +15,7 @@ m.station.obs %>% filter(date>='2019-01-01') %>%
   mutate(Q=lubridate::quarter(date, with_year = T)) ->
   daily
 
-m.keyregions <- m.station.obs %>%
-  left_join(stations %>% mutate(region_id=tolower(station_code))) %>%
-  filter(!is.na(keyregion2018)) %>%
-  mutate(date=as.Date(date)) %>%
+m.keyregions <- daily %>% filter(!is.na(keyregion2018), keyregion2018 != 'PRD') %>%
   group_by(region_id=keyregion2018, process_id, date, poll, timezone, unit, source) %>%
   summarise_at('value', mean, na.rm=T)
 
@@ -41,6 +38,7 @@ targets %>% select(keyregion2018, Province, CityEN, Q=target_period, base_period
 #add official monthly averaged data from MEE
 targets %>% select(keyregion2018, Province, CityEN, Q=base_period, value=base_PM25) %>%
   mutate(source='monthly') %>% bind_rows(m.quarterly) -> m.quarterly
+
 
 
 
@@ -72,9 +70,11 @@ bind_rows(m.quarterly %>% filter(source == 'hourly', Q %in% c(2020.2, 2020.3)),
 
 
 #One year running mean plots with the target for end of Q4 and Q1 marked as points, and linear path from latest value to targets
-plots.targets_ts(targetmeans.Q1, targetmeans.Q4, m.keyregions)
+# DONE
+plots.targets(targetmeans.Q1, targetmeans.Q4, m.keyregions)
 
 max.date <- max(daily$date)
+m.qtd = daily %>% filter(Q %in% c(2019.4, 2020.4), yday(date)<=yday(max(daily$date)))
 means.qtd = m.qtd %>% group_by(keyregion2018, Province, CityEN, poll, Q) %>% summarise_at('value', mean, na.rm=T)
 means.qtd = m.qtd %>% group_by(keyregion2018, poll, Q) %>% summarise_at('value', mean, na.rm=T) %>% bind_rows(means.qtd)
 means.qtd = m.qtd %>% group_by(poll, Q) %>% summarise_at('value', mean, na.rm=T) %>%
