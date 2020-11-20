@@ -74,7 +74,7 @@ bind_rows(m.quarterly %>% filter(source == 'hourly', Q %in% c(2020.2, 2020.3)),
 plots.targets(targetmeans.Q1, targetmeans.Q4, m.keyregions)
 
 max.date <- max(daily$date)
-m.qtd = daily %>% filter(Q %in% c(2019.4, 2020.4), yday(date)<=yday(max(daily$date)))
+m.qtd = daily %>% ungroup %>% filter(Q %in% c(2019.4, 2020.4), yday(date)<=yday(max(daily$date)))
 means.qtd = m.qtd %>% group_by(keyregion2018, Province, CityEN, poll, Q) %>% summarise_at('value', mean, na.rm=T)
 means.qtd = m.qtd %>% group_by(keyregion2018, poll, Q) %>% summarise_at('value', mean, na.rm=T) %>% bind_rows(means.qtd)
 means.qtd = m.qtd %>% group_by(poll, Q) %>% summarise_at('value', mean, na.rm=T) %>%
@@ -92,7 +92,7 @@ t.keyregions <- qtd.yoy %>%
   bind_rows(m.quarterly %>%
               filter(source=='target', Q==2021.1) %>%
               select(CityEN, Province, keyregion2018, target_reduction, Q)) %>%
-  filter(is.na(CityEN), poll=='pm25')
+  filter(is.na(CityEN), !is.na(target_reduction))
 
 plots.targets_col(t.keyregions)
 
