@@ -122,7 +122,7 @@ plots.targets_yoyts_vs_targets <- function(m.keyregions, t.keyregions,
     filter(!is.na(region_id),
            date>="2018-10-01",
            poll==!!poll) %>%
-    rcrea::utils.running_average(90) %>%
+    rcrea::utils.running_average(90, group_by_cols = c("region_id","poll")) %>%
     filter(date>="2019-01-01") %>%
     mutate(year=lubridate::year(date),
            date = `year<-`(date, 0)) %>%
@@ -208,7 +208,9 @@ plots.targets_yoyts_vs_targets <- function(m.keyregions, t.keyregions,
 # Deweathered -------------------------------------------------------------
 
 
-plots.quarter_anomalies <- function(m.dew.regional, absolute_or_percent="absolute"){
+plots.quarter_anomalies <- function(m.dew.regional,
+                                    absolute_or_percent="absolute",
+                                    folder=file.path(dir_results_plots, "deweathered", "regional")){
 
   absolute <- absolute_or_percent == "absolute"
   process_id <- ifelse(absolute, "anomaly", "anomaly_percent")
@@ -237,9 +239,9 @@ plots.quarter_anomalies <- function(m.dew.regional, absolute_or_percent="absolut
 Source: CREA based on MEE."
       ))
 
-    d <- file.path(dir_results_plots, "deweathered", "regional")
-    dir.create(d, showWarnings = F, recursive = T)
-    ggsave(file.path(d, paste0("mee_region_anomaly_qtd_",poll,"_",absolute_or_percent,".png")),
+
+    dir.create(folder, showWarnings = F, recursive = T)
+    ggsave(file.path(folder, paste0("mee_region_anomaly_qtd_",poll,"_",absolute_or_percent,".png")),
            p,
            width=8,
            height=8)

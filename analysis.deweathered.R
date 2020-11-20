@@ -62,6 +62,8 @@ if(F){
 }
 
 
+
+
 # Plot 1: City level
 
 rcrea::plot_recents(meas_raw=m.dew %>% filter(process_id=="anomaly_percent"),
@@ -88,13 +90,21 @@ m.dew.regional <- m.dew %>%
   filter(!is.na(region_id))
 
 
-m.equivalent <-
+# Sanity check
+
+m.sanity <-
   bind_rows(
-    m.keyregions %>% filter(date<=min(m.dew$date)),
-    m.dew.regional %>% filter(process_id=="anomaly_percent"))
+    m.keyregions %>% mutate(type="Observations"),
+    m.dew.regional %>% filter(process_id=="anomaly_offsetted") %>% mutate(type="Deweathered"),
+    m.dew.regional %>% filter(process_id=="anomaly_counterfactual") %>% mutate(type="Counterfactual")) %>%
+  filter(poll=="pm25")
+
+ggplot(m.sanity %>% rcrea::utils.running_average(30), aes(date,value)) +
+  geom_line(aes(col=type,linetype=type)) +
+  facet_wrap(~region_id, scales="free_y")
 
 
-rcrea::plot_recents(meas_raw=m.equivalent,
+rcrea::plot_recents(meas_raw=m.dew.regional %>% filter(process_id="anomaly"),
                     running_days = 30,
                     aggregate_level = "region",
                     source="mee",
@@ -106,17 +116,21 @@ rcrea::plot_recents(meas_raw=m.equivalent,
                     folder=file.path(dir_results_plots, "deweathered", "regional"))
 
 
-plots.quarter_anomalies(m.dew.regional, "absolute")
+plots.quarter_anomalies(m.dew.regional, "absolute", folder=file.path(dir_results_plots, "deweathered", "regional"))
 
 
 
 # Regional with targets ---------------------------------------------------
 
+m.combined <-
+  bind_rows(
+    m.keyregions %>% filter(date<=min(m.dew.regional[m.dew.regional$process_id=="anomaly_offsetted",]$date)),
+    m.dew.regional %>% filter(process_id=="anomaly_offsetted")) %>%
+  mutate(date=as.Date(date))
+
+
 plots.targets_yoyts_vs_targets(
-  m.keyregions=m.dew.regional %>%
-    filter(process_id=="anomaly_offsetted") %>%
-    mutate(date=as.Date(date)) %>%
-    ungroup(),
+  m.keyregions=m.combined,
   t.keyregions,
   folder=file.path(dir_results_plots, "deweathered", "regional"))
 
