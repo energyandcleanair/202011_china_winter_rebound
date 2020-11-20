@@ -141,10 +141,10 @@ plots.targets_yoyts_vs_targets <- function(m.keyregions, t.keyregions,
            type="Target",
            poll="pm25") %>%
     bind_rows(.,
-      m %>%
-      # filter(date==max(max(m.keyregions$date)))) %>%
-      filter(date=='2020-10-01')) %>%
-      mutate(type="Target")
+              m %>%
+                # filter(date==max(max(m.keyregions$date)))) %>%
+                filter(date=='2020-10-01')) %>%
+    mutate(type="Target")
 
   rect.target <- t %>%
     filter(type=="Target", !is.na(value), !is.na(region_id)) %>%
@@ -165,35 +165,37 @@ plots.targets_yoyts_vs_targets <- function(m.keyregions, t.keyregions,
 
 
   (p <- ggplot() +
-    # geom_polygon(data=rect.target, aes(x=date, y=value,fill=type, alpha=type)) +
-    geom_line(data=m %>% filter(type=="Observations"),
+      # geom_polygon(data=rect.target, aes(x=date, y=value,fill=type, alpha=type)) +
+      geom_line(data=m %>% filter(type=="Observations"),
                 aes(date, value, col=value), linetype="solid", size=0.7) +
-    geom_line(data=m %>% filter(type=="Target"),
-                  aes(date, value),col="darkred", linetype="dashed", size=0.7) +
-    # To force legend
-    geom_line(data=m %>% distinct(type, .keep_all = T), aes(date, value, linetype=type)) +
+      geom_line(data=m %>% filter(type=="Target"),
+                aes(date, value),col="darkred", linetype="dashed", size=0.7) +
+      # To force legend
+      geom_line(data=m %>% distinct(type, .keep_all = T), aes(date, value, linetype=type)) +
+      geom_point(data=m %>% filter(type=="Target", date>today()), aes(date, value),
+                 shape=1, col='darkred') +
 
-    facet_wrap(~region_id, nrow=nrow) +
-    geom_hline(yintercept=0) +
-    # geom_point(data=rect.target, aes(date,value,col=type)) +
-    theme_crea() +
-    theme(legend.position = 'bottom',
-          panel.grid.minor.x = element_line(colour = "grey90"),
-          axis.text.x = element_text(angle=25, vjust=.5)) +
-    scale_linetype_discrete(name='', guide = guide_legend(ncol=2)) +
-    # scale_color_manual(name='', values=c('black', 'darkred')) +
-    scale_fill_manual(name='', values=c('darkred')) +
-    scale_alpha_manual(name='', values=c(0.4)) +
-    scale_x_date(limits=as.Date(c("2020-01-01","2021-04-15")),
-                 breaks=seq(as.Date("2020-01-01"), as.Date("2021-04-15"), by="3 month"),
-                 date_labels="%b %Y"
-    ) +
-    scale_y_continuous(limits=c(ymin, NA), labels=scales::percent, expand=expansion(mult=c(0,.05))) +
-    scale_color_gradientn(colors = chg_colors, guide = F, limits=c(-maxabs,maxabs)) +
-    labs(title="Are key regions on track?",
-         subtitle=paste("Year-on-year change in", poll_str(poll), "levels and path to targets"),
-         x=NULL,
-         y="90-day running mean, year-on-year") )
+      facet_wrap(~region_id, nrow=nrow) +
+      geom_hline(yintercept=0) +
+      # geom_point(data=rect.target, aes(date,value,col=type)) +
+      theme_crea() +
+      theme(legend.position = 'bottom',
+            panel.grid.minor.x = element_line(colour = "grey90"),
+            axis.text.x = element_text(angle=25, vjust=.5)) +
+      scale_linetype_discrete(name='', guide = guide_legend(ncol=2)) +
+      # scale_color_manual(name='', values=c('black', 'darkred')) +
+      scale_fill_manual(name='', values=c('darkred')) +
+      scale_alpha_manual(name='', values=c(0.4)) +
+      scale_x_date(limits=as.Date(c("2020-01-01","2021-04-15")),
+                   breaks=seq(as.Date("2020-01-01"), as.Date("2021-04-15"), by="3 month"),
+                   date_labels="%b %Y"
+      ) +
+      scale_y_continuous(limits=c(ymin, NA), labels=scales::percent, expand=expansion(mult=c(0,.05))) +
+      scale_color_gradientn(colors = chg_colors, guide = F, limits=c(-maxabs,maxabs)) +
+      labs(title="Are key regions on track?",
+           subtitle=paste("Year-on-year change in", poll_str(poll), "levels and path to targets"),
+           x=NULL,
+           y="90-day running mean, year-on-year") )
 
   if(!is.null(folder)) {
     d <- folder
@@ -226,18 +228,18 @@ plots.quarter_anomalies <- function(m.dew.regional, absolute_or_percent="absolut
   polls <- unique(m.plot$poll)
   for(poll in polls){
     (p <-  ggplot(m.plot %>% filter(poll==!!poll)) +
-      geom_bar(stat="identity", aes(Q, value, fill="a"), show.legend = F) +
-      facet_wrap(~region_id) +
-      rcrea::CREAtheme.scale_fill_crea_d() +
-      theme_crea() +
-      labs(
-        y=ylab,
-        x=NULL,
-        title=paste0(rcrea::poll_str(poll), " pollutant levels in 2020"),
-        subtitle="Weather-corrected anomalies in 2020 quarters",
-        caption="A negative value indicates an air pollution level lower than what would have been expected under observed weather conditions.
+       geom_bar(stat="identity", aes(Q, value, fill="a"), show.legend = F) +
+       facet_wrap(~region_id) +
+       rcrea::CREAtheme.scale_fill_crea_d() +
+       theme_crea() +
+       labs(
+         y=ylab,
+         x=NULL,
+         title=paste0(rcrea::poll_str(poll), " pollutant levels in 2020"),
+         subtitle="Weather-corrected anomalies in 2020 quarters",
+         caption="A negative value indicates an air pollution level lower than what would have been expected under observed weather conditions.
 Source: CREA based on MEE."
-      ))
+       ))
 
     d <- file.path(dir_results_plots, "deweathered", "regional")
     dir.create(d, showWarnings = F, recursive = T)
@@ -272,18 +274,18 @@ plots.quarter_yoy <- function(m.dew, m.quarterly){
 
 
   (p <-  ggplot(m.plot %>% mutate(region_name=tools::toTitleCase(region_id))) +
-       geom_bar(stat="identity", aes(value, region_name, fill=indicator), position="dodge") +
-       theme_crea() +
-       rcrea::CREAtheme.scale_fill_crea_d() +
-       labs(
-         y=ylab,
-         x=NULL,
-         title="PM2.5 year-to-date reductions in 2020Q4"
-       ))
+      geom_bar(stat="identity", aes(value, region_name, fill=indicator), position="dodge") +
+      theme_crea() +
+      rcrea::CREAtheme.scale_fill_crea_d() +
+      labs(
+        y=ylab,
+        x=NULL,
+        title="PM2.5 year-to-date reductions in 2020Q4"
+      ))
 
-    dir.create(d, showWarnings = F, recursive = T)
-    ggsave(file.path(d, paste0("mee_region_yoy_qtd_",poll,"_",absolute_or_percent,".png")),
-           p,
-           width=8,
-           height=8)
+  dir.create(d, showWarnings = F, recursive = T)
+  ggsave(file.path(d, paste0("mee_region_yoy_qtd_",poll,"_",absolute_or_percent,".png")),
+         p,
+         width=8,
+         height=8)
 }
