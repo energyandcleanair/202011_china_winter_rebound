@@ -33,7 +33,7 @@ plots.compare_past_years <- function(m, poll, folder=NULL, width=14, height=12, 
 # Targets -----------------------------------------------------------------
 
 
-plots.targets_ts <- function(targetmeans.Q1, targetmeans.Q4, m.keyregions, nrow=2, width=7.5,height=7.5, dpi=270, ...){
+plots.targets_ts <- function(targetmeans.Q1, targetmeans.Q4, m.keyregions, folder=file.path(dir_results_plots, "regional", "EN"), nrow=2, width=7.5,height=7.5, dpi=270, ...){
 
   m <- m.keyregions %>%
     filter(!is.na(region_id)) %>%
@@ -82,13 +82,12 @@ plots.targets_ts <- function(targetmeans.Q1, targetmeans.Q4, m.keyregions, nrow=
            y=expression(paste("PM2.5 concentration [",mu,"g/m3]")),
            x=NULL))
 
-  d <- file.path(dir_results_plots, "regional", "EN")
-  dir.create(d, showWarnings = F, recursive = T)
-  ggsave(file.path(d, "target_regional.png"),
+  dir.create(folder, showWarnings = F, recursive = T)
+  ggsave(file.path(folder, "target_regional.png"),
          width=width, height=height, dpi=dpi, ...)
 }
 
-plots.targets_col <- function(t.keyregions, nrow=2, width=7.5,height=7.5, dpi=270, ...){
+plots.targets_col <- function(t.keyregions, folder=file.path(dir_results_plots, "regional", "EN"), nrow=2, width=7.5,height=7.5, dpi=270, ...){
 
   d <- t.keyregions %>% select(keyregion2018, `Target`=target_reduction, `Quarter-to-Date`=QTD_reduction) %>%
     gather("type","value",-keyregion2018) %>%
@@ -104,9 +103,8 @@ plots.targets_col <- function(t.keyregions, nrow=2, width=7.5,height=7.5, dpi=27
     labs("Year-on-year varition of PM2.5 levels in 2020Q4",
          y="Year-on-year change")
 
-  d <- file.path(dir_results_plots, "regional", "EN")
-  dir.create(d, showWarnings = F, recursive = T)
-  ggsave(file.path(d, "target_regional_cols.png"),
+  dir.create(folder, showWarnings = F, recursive = T)
+  ggsave(file.path(folder, "target_regional_cols.png"),
          width=width, height=height, dpi=dpi, ...)
 
 }
@@ -146,14 +144,14 @@ plots.targets_yoyts_vs_targets <- function(m.keyregions, t.keyregions,
                 filter(date=='2020-10-01')) %>%
     mutate(type="Target")
 
-  rect.target <- t %>%
-    filter(type=="Target", !is.na(value), !is.na(region_id)) %>%
-    arrange(date) %>%
-    bind_rows(
-      mutate(., value=ymin) %>% arrange(desc(date)),
-      .
-    ) %>%
-    arrange(region_id)
+  # rect.target <- t %>%
+  #   filter(type=="Target", !is.na(value), !is.na(region_id)) %>%
+  #   arrange(date) %>%
+  #   bind_rows(
+  #     mutate(., value=ymin) %>% arrange(desc(date)),
+  #     .
+  #   ) %>%
+  #   arrange(region_id)
 
   m <- bind_rows(m, t) %>%
     filter(!is.na(region_id))
