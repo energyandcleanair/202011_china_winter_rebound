@@ -1,7 +1,9 @@
 
-utils.read_stations <- function(){
-  read.csv("data/station_key2018.csv") -> stationkey
-  read.csv(paste0("data/stationZHnames,with Fenwei.csv"),
+utils.read_stations <- function(local=T){
+
+
+  read.csv(ifelse(local, "data/station_key2018.csv","https://raw.githubusercontent.com/energyandcleanair/202011_china_winter_rebound/main/data/station_key2018.csv")) -> stationkey
+  read.csv(paste0(ifelse(local,"data/stationZHnames,with Fenwei.csv","https://raw.githubusercontent.com/energyandcleanair/202011_china_winter_rebound/main/data/stationZHnames%2Cwith%20Fenwei.csv")),
            encoding="UTF-8",
            stringsAsFactors=F) %>%
     rename(station_name=station,CityZH=City) -> citynames
