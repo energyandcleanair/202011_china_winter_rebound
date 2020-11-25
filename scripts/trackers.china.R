@@ -33,12 +33,12 @@ m.station.obs <- rcrea::measurements(source="mee",
                                      date_from="2018-10-01",
                                      poll=c(rcrea::PM25, rcrea::NO2, rcrea::SO2, rcrea::O3),
                                      deweathered = F)
-
+print("ENRICHING MEASUREMENTS============")
 m.station.obs.rich <- m.station.obs %>%
   mutate(region_id=toupper(region_id)) %>%
   left_join(stations %>% select(station_code, keyregion2018), by=c("region_id"="station_code"))
 
-
+print("MERGING PER REGION============")
 m.region <- m.station.obs.rich %>%
   filter(!is.na(keyregion2018)) %>%
   group_by(date=lubridate::date(date), poll, unit, region_id=tolower(keyregion2018), process_id, source, timezone) %>%
