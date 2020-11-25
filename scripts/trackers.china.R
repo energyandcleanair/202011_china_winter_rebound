@@ -23,8 +23,10 @@ folder_national <- file.path(folder, "national")
 
 
 # Getting data ------------------------------------------------------------
+print("READING STATIONS============")
 stations <- utils.read_stations(local=F)
 # station_ids <- stations %>% filter(!is.na(keyregion2018)) %>% pull(station_code)
+print("GETTING MEASUREMENTS============")
 m.station.obs <- rcrea::measurements(source="mee",
                                      # location_id=station_ids,
                                      process_id="station_day_mad",
@@ -46,6 +48,7 @@ m.region <- m.station.obs.rich %>%
 
 
 # YOY 30 day  -------------------------------------------------------------------
+print("PLOTTING YOY 30 DAY============")
 rcrea::plot_recents(meas_raw=m.region %>% filter(date>="2018-12-01"),
                     type="yoy-relative",
                     subfile_by = "poll",
@@ -62,6 +65,7 @@ rcrea::plot_recents(meas_raw=m.region %>% filter(date>="2018-12-01"),
 
 
 # Key region targets ------------------------------------------------------
+print("PREPARING TARGETS============")
 targets = openxlsx::read.xlsx("http://github.com/energyandcleanair/202011_china_winter_rebound/raw/main/data/winter%20targets%202020-2021.xlsx")%>%
   rename(keyregion2018=keyRegion2018) %>%
   mutate_at(c('target_period', 'base_period'), function(x) x %>% gsub('Q', '\\.', .) %>% as.numeric)
@@ -123,8 +127,6 @@ bind_rows(m.quarterly %>% filter(source == 'hourly', Q %in% c(2020.1, 2020.2, 20
 bind_rows(m.quarterly %>% filter(source == 'hourly', Q %in% c(2020.2, 2020.3)),
           m.quarterly %>% filter(source == 'target', Q %in% c(2020.4, 2021.1))) %>% targetmean -> targetmeans.Q1
 
-
-
 max.date <- max(daily$date)
 m.qtd = daily %>% ungroup %>% filter(Q %in% c(2019.4, 2020.4), yday(date)<=yday(max(daily$date)))
 means.qtd = m.qtd %>% group_by(keyregion2018, Province, CityEN, poll, Q) %>% summarise_at('value', mean, na.rm=T)
@@ -147,7 +149,6 @@ t.keyregions <- qtd.yoy %>%
   filter(is.na(CityEN), !is.na(target_reduction))
 
 
-
 m.keyregions <- m.station.obs %>%
   left_join(stations %>% mutate(region_id=tolower(stationID)) %>% select(region_id, keyregion2018)) %>%
   filter(!is.na(keyregion2018),
@@ -156,10 +157,12 @@ m.keyregions <- m.station.obs %>%
   summarise_at('value', mean, na.rm=T)
 
 #One year running mean plots with the target for end of Q4 and Q1 marked as points, and linear path from latest value to targets
+print("PLOTTING TARGETS============")
 plots.targets_yoyts_vs_targets(m.keyregions, t.keyregions, folder=folder_regional)
 
 
 # National ----------------------------------------------------------------
+print("NATIONAL ============")
 m.national <- m.station.obs %>%
   group_by(date, poll, unit, region_id="china", process_id, source, timezone) %>%
   summarise(value=mean(value, na.rm=T)) %>%
