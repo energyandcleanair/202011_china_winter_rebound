@@ -70,7 +70,7 @@ rcrea::plot_recents(meas_raw=m.region %>% filter(date>="2018-12-01"),
 print("PREPARING TARGETS [1]============")
 targets = read_csv("http://github.com/energyandcleanair/202011_china_winter_rebound/raw/main/data/winter_targets_2020_2021.csv")%>%
   rename(keyregion2018=keyRegion2018) %>%
-  mutate_at(c('target_period', 'base_period', 'base_PM25'), function(x) x %>% gsub('Q', '\\.', .) %>% as.numeric)
+  mutate_at(c('target_period', 'base_period', 'base_PM25', '2019Q4','2019Q1'), function(x) x %>% gsub('Q', '\\.', .) %>% as.numeric)
 
 print("PREPARING TARGETS [2]============")
 #daily average PM2.5 by station
