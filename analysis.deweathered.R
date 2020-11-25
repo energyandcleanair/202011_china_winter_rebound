@@ -11,7 +11,7 @@ duplicated_cities <- utils.check_cities_unique(cities, stations)
 cities <- cities %>% filter(!CityEN %in% duplicated_cities)
 
 
-if(F){
+if(T){
   # To be run on server ideally.
 
   # Unique identifier of city-level data is city and country... which is an issue given
@@ -21,42 +21,54 @@ if(F){
   # NOTE: station level deweathering is time-consuming, that's why we've run it only on duplicated cities
 
   require(creadeweather)
-  m.dew.city.raw <- creadeweather::deweather(source="mee",
-                                                     city=cities$CityEN,
-                                                     poll="pm25",
-                                                     output="anomaly",
-                                                     upload_results = F,
-                                                     years_force_refresh = NULL,
-                                                     training_start_anomaly = "2017-04-01",
-                                                     training_end_anomaly = "2019-06-30")
 
-  m.dew.city <- m.dew.city.raw %>%
-    tidyr::unnest(normalised) %>%
-    select(-c(process_deweather, process_id, predicted)) %>%
-    left_join(stations %>% mutate(region_id=tolower(CityEN))) %>%
-    select(region_id, date, poll, unit, process_id=output, CityZH, Province, keyregion2018, value)
+  configs <- tibble(
+    filename = c("m.dew.endq3.RDS","m.dew.endq2.RDS","m.dew.endq3.pbl.RDS","m.dew.endq2.pbl.RDS"),
+    training_end = c("2019-09-30","2019-06-30","2019-09-30","2019-06-30"),
+    add_pbl = c(F,F,T,T)
+  )
+
+  for (row in 1:nrow(configs)) {
+    m.dew.city.raw <- creadeweather::deweather(source="mee",
+                                               city=cities$CityEN,
+                                               poll="pm25",
+                                               output="anomaly",
+                                               upload_results = F,
+                                               years_force_refresh = NULL,
+                                               add_pbl=configs[[row,"add_pbl"]],
+                                               training_start_anomaly = "2017-04-01",
+                                               training_end_anomaly = configs[[row,"training_end"]])
+
+    m.dew.city <- m.dew.city.raw %>%
+      tidyr::unnest(normalised) %>%
+      select(-c(process_deweather, process_id, predicted)) %>%
+      left_join(stations %>% mutate(region_id=tolower(CityEN))) %>%
+      select(region_id, date, poll, unit, process_id=output, CityZH, Province, keyregion2018, value)
 
 
-  m.dew.station.raw <- creadeweather::deweather(source="mee",
-                                                        city=duplicated_cities,
-                                                        aggregate_level = "station",
-                                                        poll="pm25",
-                                                        output="anomaly",
-                                                        upload_results = F,
-                                                        years_force_refresh = NULL,
-                                                        training_start_anomaly = "2017-04-01",
-                                                        training_end_anomaly = "2019-06-30")
+    m.dew.station.raw <- creadeweather::deweather(source="mee",
+                                                  city=duplicated_cities,
+                                                  aggregate_level = "station",
+                                                  poll="pm25",
+                                                  output="anomaly",
+                                                  upload_results = F,
+                                                  years_force_refresh = NULL,
+                                                  add_pbl=configs[[row,"add_pbl"]],
+                                                  training_start_anomaly = "2017-04-01",
+                                                  training_end_anomaly = configs[[row,"training_end"]])
 
-  m.dew.station <-  m.dew.station.raw %>%
-    tidyr::unnest(normalised) %>%
-    select(-c(process_deweather, process_id, predicted)) %>%
-    left_join(stations %>% mutate(region_id=tolower(station_code))) %>%
-    mutate(region_id=tolower(CityEN)) %>%
-    group_by(region_id, date, poll, unit, process_id=output, CityZH, Province, keyregion2018) %>%
-    summarize_at("value", mean, na.rm=T)
+    m.dew.station <-  m.dew.station.raw %>%
+      tidyr::unnest(normalised) %>%
+      select(-c(process_deweather, process_id, predicted)) %>%
+      left_join(stations %>% mutate(region_id=tolower(station_code))) %>%
+      mutate(region_id=tolower(CityEN)) %>%
+      group_by(region_id, date, poll, unit, process_id=output, CityZH, Province, keyregion2018) %>%
+      summarize_at("value", mean, na.rm=T)
 
-  m.dew <- bind_rows(m.dew.city, m.dew.station)
-  saveRDS(m.dew, file.path(dir_results, "m.dew.RDS"))
+    m.dew <- bind_rows(m.dew.city, m.dew.station)
+    saveRDS(m.dew, file.path(dir_results, configs[[row,"filename"]]))
+  }
+
 }else{
   m.dew <- readRDS(file.path(dir_results, "m.dew.RDS"))
 }
