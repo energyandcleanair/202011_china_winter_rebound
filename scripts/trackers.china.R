@@ -66,7 +66,7 @@ rcrea::plot_recents(meas_raw=m.region %>% filter(date>="2018-12-01"),
 
 # Key region targets ------------------------------------------------------
 print("PREPARING TARGETS============")
-targets = openxlsx::read.xlsx("http://github.com/energyandcleanair/202011_china_winter_rebound/raw/main/data/winter%20targets%202020-2021.xlsx")%>%
+targets = read.csv("http://github.com/energyandcleanair/202011_china_winter_rebound/raw/main/data/winter_targets_2020_2021.csv")%>%
   rename(keyregion2018=keyRegion2018) %>%
   mutate_at(c('target_period', 'base_period'), function(x) x %>% gsub('Q', '\\.', .) %>% as.numeric)
 
