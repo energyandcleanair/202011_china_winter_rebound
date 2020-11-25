@@ -1,7 +1,10 @@
+install.packages(c("tidyverse","remotes","openxlsx"))
+remotes::install_github("energyandcleanair/rcrea", force=F, upgrade=F)
+
 library(dplyr)
 library(remotes)
 library(tidyverse)
-remotes::install_github("energyandcleanair/rcrea", force=F, upgrade=F)
+
 # remotes::install_github("energyandcleanair/creadeweather", force=F, upgrade=F)
 
 library(rcrea)
