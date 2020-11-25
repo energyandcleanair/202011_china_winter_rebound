@@ -25,13 +25,14 @@ folder_national <- file.path(folder, "national")
 # Getting data ------------------------------------------------------------
 print("READING STATIONS============")
 stations <- utils.read_stations(local=F)
-# station_ids <- stations %>% filter(!is.na(keyregion2018)) %>% pull(station_code)
+station_ids <- stations %>% filter(!is.na(keyregion2018)) %>% pull(station_code)
+
 print("GETTING MEASUREMENTS============")
 m.station.obs <- rcrea::measurements(source="mee",
-                                     # location_id=station_ids,
+                                     location_id=station_ids,
                                      process_id="station_day_mad",
                                      date_from="2018-10-01",
-                                     poll=c(rcrea::PM25, rcrea::NO2, rcrea::SO2, rcrea::O3),
+                                     poll=c(rcrea::PM25),
                                      deweathered = F)
 print("ENRICHING MEASUREMENTS============")
 m.station.obs.rich <- m.station.obs %>%
@@ -161,26 +162,29 @@ print("PLOTTING TARGETS============")
 plots.targets_yoyts_vs_targets(m.keyregions, t.keyregions, folder=folder_regional)
 
 
-# National ----------------------------------------------------------------
-print("NATIONAL ============")
-m.national <- m.station.obs %>%
-  group_by(date, poll, unit, region_id="china", process_id, source, timezone) %>%
-  summarise(value=mean(value, na.rm=T)) %>%
-  mutate(country="CN",
-         region_name=tools::toTitleCase(region_id))
-
-
-rcrea::plot_recents(meas_raw=m.national %>% filter(date>="2018-11-30"),
-                    type="yoy-relative",
-                    subplot_by = "poll",
-                    running_days = c(30),
-                    subfile_by = "country",
-                    aggregate_level = "country",
-                    color_by="value",
-                    size="l",
-                    source="mee",
-                    folder = folder_national
-)
+# # National ----------------------------------------------------------------
+# print("NATIONAL ============")
+# if(length(unique(m.station.obs$region_id)) < 1385){
+#   stop("Missing stations. You probably queried those of key control regions only")
+# }
+# m.national <- m.station.obs %>%
+#   group_by(date, poll, unit, region_id="china", process_id, source, timezone) %>%
+#   summarise(value=mean(value, na.rm=T)) %>%
+#   mutate(country="CN",
+#          region_name=tools::toTitleCase(region_id))
+#
+#
+# rcrea::plot_recents(meas_raw=m.national %>% filter(date>="2018-11-30"),
+#                     type="yoy-relative",
+#                     subplot_by = "poll",
+#                     running_days = c(30),
+#                     subfile_by = "country",
+#                     aggregate_level = "country",
+#                     color_by="value",
+#                     size="l",
+#                     source="mee",
+#                     folder = folder_national
+# )
 
 
 # Deweathered quarters ----------------------------------------------------
