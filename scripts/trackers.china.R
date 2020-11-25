@@ -1,5 +1,6 @@
 install.packages(c("tidyverse","remotes","openxlsx"))
 remotes::install_github("energyandcleanair/rcrea", force=F, upgrade=F)
+Sys.setenv("TZ"="Etc/UTC");
 
 library(dplyr)
 library(remotes)
