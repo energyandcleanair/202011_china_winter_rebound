@@ -3,9 +3,12 @@ library(remotes)
 library(tidyverse)
 remotes::install_github("energyandcleanair/rcrea")
 library(rcrea)
+librqry(lubridate)
+#
+# library(showtext)
+# showtext_auto()
 
-library(showtext)
-showtext_auto()
+mu <- stringi::stri_unescape_unicode("\U00B5")
 
 dir_results <- "results"
 dir_results_plots <- "results/plots"
