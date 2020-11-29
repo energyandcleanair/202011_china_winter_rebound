@@ -35,6 +35,7 @@ config <- list("filename"=filename,
                "training_end"=training_end,
                "add_pbl"=add_pbl)
 
+mu <- stringi::stri_unescape_unicode("\U00B5")
 
 # Getting data ------------------------------------------------------------
 stations <- utils.read_stations(local=F)
