@@ -94,7 +94,9 @@ saveRDS(m.dew.regional, file.path(folder_regional, "deweathered_mee_keyregions.R
 
 # Plotting ----------------------------------------------------------------
 # City level
-rcrea::plot_recents(meas_raw=m.dew %>% filter(process_id=="anomaly_percent") %>%
+rcrea::plot_recents(meas_raw=m.dew %>%
+                      filter(process_id=="anomaly_vs_counterfactual") %>%
+                      mutate(value=value*100) %>%
                       mutate(region_id=paste0("[",keyregion2018,"] ", tools::toTitleCase(region_id)),
                              region_name=region_id) %>%
                       arrange(region_id),
@@ -106,9 +108,14 @@ rcrea::plot_recents(meas_raw=m.dew %>% filter(process_id=="anomaly_percent") %>%
                     color_by="value",
                     subplot_by = "region_id",
                     subfile_by = "poll",
-                    folder=folder_city)
+                    folder=folder_city,
+                    add_to_ggplot = labs(title="Weather-corrected anomalies of PM2.5 levels",
+                                                             y="Anomaly [%]"))
+
 # Regional level
-rcrea::plot_recents(meas_raw=m.dew.regional %>% filter(process_id=="anomaly_percent"),
+rcrea::plot_recents(meas_raw=m.dew.regional %>%
+                      filter(process_id=="anomaly_vs_counterfactual") %>%
+                      mutate(value=value*100),
                     running_days = 30,
                     aggregate_level = "region",
                     source="mee",
