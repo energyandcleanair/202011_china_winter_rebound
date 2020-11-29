@@ -127,7 +127,8 @@ plots.quarter_anomalies(m.dew.regional, "relative", folder=folder_regional)
 
 ggplot(m.sanity %>% rcrea::utils.running_average(30), aes(date,value)) +
   geom_line(aes(col=type,linetype=type)) +
-  facet_wrap(~region_id, scales="free_y")
+  facet_wrap(~region_id, scales="free_y") +
+  theme_light()
 
-ggsave(file.path(folder_regional, "sanity.png"))
+ggsave(file.path(folder_regional, "sanity_check.png"), width=10, height=8)
 
