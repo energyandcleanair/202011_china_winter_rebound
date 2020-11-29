@@ -7,12 +7,16 @@
     "export": [
        {
          "dest_folder":"gs://crea-public/plots/mee/region/keyregions/tracker/deweathered",
-         "source_filepath":"regional/*"
+         "source_filepath":"regional/*.png"
        },
-      {
+       {
+         "dest_folder":"gs://crea-public/data/meas/deweathered",
+         "source_filepath":"regional/*.RDS"
+       },
+       {
          "dest_folder":"gs://crea-public/plots/mee/city/keyregions/tracker/deweathered",
-         "source_filepath":"city/*"
-      }
+         "source_filepath":"city/*.png"
+       }
      ]
   }
 ]

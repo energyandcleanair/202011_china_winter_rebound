@@ -80,6 +80,7 @@ m.dew.regional <- m.dew %>%
   summarise_at("value", mean, na.rm=T) %>%
   filter(!is.na(region_id))
 
+saveRDS(m.dew.regional, file.path(folder_regional, "deweathered_mee_keyregions.RDS"))
 
 # Plotting ----------------------------------------------------------------
 # City level
