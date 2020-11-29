@@ -46,6 +46,7 @@ duplicated_cities <- utils.check_cities_unique(cities, stations)
 cities <- cities %>% filter(!CityEN %in% duplicated_cities)
 
 m.dew.city.raw <- creadeweather::deweather(source="mee",
+                                           years_force_refresh = NULL, #TODO remove
                                            city=cities$CityEN,
                                            poll="pm25",
                                            output="anomaly",
@@ -62,6 +63,7 @@ m.dew.city <- m.dew.city.raw %>%
 
 
 m.dew.station.raw <- creadeweather::deweather(source="mee",
+                                              years_force_refresh = NULL, #TODO remove
                                               city=duplicated_cities,
                                               aggregate_level = "station",
                                               poll="pm25",
@@ -92,7 +94,7 @@ saveRDS(m.dew.regional, file.path(folder_regional, "deweathered_mee_keyregions.R
 # Plotting ----------------------------------------------------------------
 # City level
 rcrea::plot_recents(meas_raw=m.dew %>% filter(process_id=="anomaly_percent") %>%
-                      mutate(region_name=paste0("[",keyregion2018,"] ", region_name)) %>%
+                      mutate(region_name=paste0("[",keyregion2018,"] ", tools::toTitleCase(region_id))) %>%
                       arrange(region_name),
                     running_days = 30,
                     aggregate_level = "city",
@@ -126,5 +128,5 @@ ggplot(m.sanity %>% rcrea::utils.running_average(30), aes(date,value)) +
   geom_line(aes(col=type,linetype=type)) +
   facet_wrap(~region_id, scales="free_y")
 
-ggsave(file.path(folder_regional,,  "sanity.png"))
+ggsave(file.path(folder_regional, "sanity.png"))
 
