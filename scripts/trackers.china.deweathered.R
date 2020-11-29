@@ -21,6 +21,8 @@ source("https://github.com/energyandcleanair/202011_china_winter_rebound/raw/mai
 folder <- {tmp_dir}
 folder_city <- file.path(folder, "city")
 folder_regional <- file.path(folder, "regional")
+dir.create(folder_city, showWarnings = F, recursive = T)
+dir.create(folder_regional, showWarnings = F, recursive = T)
 
 
 # Deweathering parameters -------------------------------------------------
@@ -28,6 +30,10 @@ filename <- "m.dew.endq3.pbl.RDS"
 training_start <- "2017-04-01"
 training_end <- "2019-09-30"
 add_pbl <- T
+config <- list("filename"=filename,
+               "training_start"=training_start,
+               "training_end"=training_end,
+               "add_pbl"=add_pbl)
 
 
 # Getting data ------------------------------------------------------------
@@ -80,6 +86,7 @@ m.dew.regional <- m.dew %>%
   summarise_at("value", mean, na.rm=T) %>%
   filter(!is.na(region_id))
 
+jsonlite::write_json(config, file.path(folder_regional, "deweathered_mee_keyregions.json"), auto_unbox = T)
 saveRDS(m.dew.regional, file.path(folder_regional, "deweathered_mee_keyregions.RDS"))
 
 # Plotting ----------------------------------------------------------------
