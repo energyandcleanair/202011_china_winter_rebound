@@ -95,8 +95,9 @@ saveRDS(m.dew.regional, file.path(folder_regional, "deweathered_mee_keyregions.R
 # Plotting ----------------------------------------------------------------
 # City level
 rcrea::plot_recents(meas_raw=m.dew %>% filter(process_id=="anomaly_percent") %>%
-                      mutate(region_name=paste0("[",keyregion2018,"] ", tools::toTitleCase(region_id))) %>%
-                      arrange(region_name),
+                      mutate(region_id=paste0("[",keyregion2018,"] ", tools::toTitleCase(region_id)),
+                             region_name=region_id) %>%
+                      arrange(region_id),
                     running_days = 30,
                     aggregate_level = "city",
                     source="mee",
