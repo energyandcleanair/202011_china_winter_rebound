@@ -243,7 +243,7 @@ Source: CREA based on MEE."
        ))
 
     if(!absolute){
-      p <- p + scale_y_continuous(labels=scales::percent
+      p <- p + scale_y_continuous(labels=scales::percent)
     }
 
     dir.create(folder, showWarnings = F, recursive = T)
