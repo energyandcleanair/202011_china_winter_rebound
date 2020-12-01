@@ -90,6 +90,7 @@ m.dew.regional <- m.dew %>%
   filter(!is.na(region_id))
 
 jsonlite::write_json(config, file.path(folder_regional, "deweathered_mee_keyregions.json"), auto_unbox = T)
+saveRDS(m.dew, file.path(folder_city, "deweathered_mee_keyregions_cities.RDS"))
 saveRDS(m.dew.regional, file.path(folder_regional, "deweathered_mee_keyregions.RDS"))
 
 # Plotting ----------------------------------------------------------------
@@ -128,9 +129,10 @@ rcrea::plot_recents(meas_raw=m.dew.regional %>%
                     add_to_ggplot = labs(title="Weather-corrected anomalies of PM2.5 levels",
                                          y="Anomaly [%]"))
 
+plots.quarter_anomalies(m.dew.regional, "relative", folder=folder_regional);
+plots.quarter_anomalies(m.dew.regional, "absolute", folder=folder_regional);
 
-plots.quarter_anomalies(m.dew.regional, "absolute", folder=folder_regional)
-plots.quarter_anomalies(m.dew.regional, "relative", folder=folder_regional)
+
 
 
 # #Need to deifne m.sanity
