@@ -216,7 +216,7 @@ plots.quarter_anomalies <- function(m.dew.regional,
                                     folder=file.path(dir_results_plots, "deweathered", "regional")){
 
   absolute <- absolute_or_percent == "absolute"
-  process_id <- ifelse(absolute, "anomaly", "anomaly_percent")
+  process_id <- ifelse(absolute, "anomaly", "anomaly_vs_counterfactual")
   ylab <- ifelse(absolute, paste0("Anomaly [",mu,"g/m3]"), "Anomaly [%]")
 
   m.plot <- m.dew.regional %>%
@@ -242,6 +242,9 @@ plots.quarter_anomalies <- function(m.dew.regional,
 Source: CREA based on MEE."
        ))
 
+    if(!absolute){
+      p <- p + scale_y_continuous(labels=scales::percent
+    }
 
     dir.create(folder, showWarnings = F, recursive = T)
     ggsave(file.path(folder, paste0("mee_region_anomaly_qtd_",poll,"_",absolute_or_percent,".png")),
