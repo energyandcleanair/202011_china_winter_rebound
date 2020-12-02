@@ -118,8 +118,6 @@ plots.targets_yoyts_vs_targets <- function(m.keyregions, t.keyregions,
   if(en_or_zh=="zh"){
     font_add_google("Noto Serif SC")
     showtext_auto()
-
-    # showtext_begin()
   }
 
   poll <- "pm25"
@@ -226,10 +224,8 @@ plots.targets_yoyts_vs_targets <- function(m.keyregions, t.keyregions,
   if(!is.null(folder)) {
     d <- folder
     dir.create(d, showWarnings = F, recursive = T)
-    png(file.path(d, paste0("target_regional_90running_", poll,"_",en_or_zh,".png")),
-       width=width, height=height, ...)
-    print(p)
-    dev.off()
+    ggsave(file.path(d, paste0("target_regional_90running_", poll,"_",en_or_zh,".png")),
+           plot=p, width=width, height=height, dpi=dpi, ...)
     showtext_auto(FALSE)
   }
 
