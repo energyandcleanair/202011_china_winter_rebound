@@ -111,10 +111,14 @@ plots.targets_col <- function(t.keyregions, folder=file.path(dir_results_plots, 
 
 
 plots.targets_yoyts_vs_targets <- function(m.keyregions, t.keyregions,
+                                           en_or_zh="en",
                                            folder=file.path(dir_results_plots, "regional", "EN"),
                                            nrow=2, width=7.5,height=7.5, dpi=270, ...){
 
   poll <- "pm25"
+
+  lab_obs <- ifelse(en_or_zh=="zh","实际值","Observations")
+  lab_tgt <- ifelse(en_or_zh=="zh","达标路线值","Target")
 
   m <- m.keyregions %>%
     filter(!is.na(region_id),
@@ -127,7 +131,7 @@ plots.targets_yoyts_vs_targets <- function(m.keyregions, t.keyregions,
     spread(year, value) %>%
     mutate(value=`2020`/`2019`-1) %>%
     mutate(date=`year<-`(date, 2020),
-           type="Observations") %>%
+           type=lab_obs) %>%
     select(region_id, poll, date, value, type) %>%
     filter(!is.na(region_id))
 
@@ -136,13 +140,13 @@ plots.targets_yoyts_vs_targets <- function(m.keyregions, t.keyregions,
     mutate(date=recode(as.character(Q),
                        "2020.4"=as.Date("2020-12-31"),
                        "2021.1"=as.Date("2021-03-31")),
-           type="Target",
+           type=lab_tgt,
            poll="pm25") %>%
     bind_rows(.,
               m %>%
                 # filter(date==max(max(m.keyregions$date)))) %>%
                 filter(date=='2020-10-01')) %>%
-    mutate(type="Target")
+    mutate(type=lab_tgt)
 
   # rect.target <- t %>%
   #   filter(type=="Target", !is.na(value), !is.na(region_id)) %>%
@@ -164,13 +168,13 @@ plots.targets_yoyts_vs_targets <- function(m.keyregions, t.keyregions,
 
   (p <- ggplot() +
       # geom_polygon(data=rect.target, aes(x=date, y=value,fill=type, alpha=type)) +
-      geom_line(data=m %>% filter(type=="Observations"),
+      geom_line(data=m %>% filter(type==lab_obs),
                 aes(date, value, col=value), linetype="solid", size=0.7) +
-      geom_line(data=m %>% filter(type=="Target"),
+      geom_line(data=m %>% filter(type==lab_tgt),
                 aes(date, value),col="darkred", linetype="dashed", size=0.7) +
       # To force legend
       geom_line(data=m %>% distinct(type, .keep_all = T), aes(date, value, linetype=type)) +
-      geom_point(data=m %>% filter(type=="Target", date>today()), aes(date, value),
+      geom_point(data=m %>% filter(type==lab_tgt, date>today()), aes(date, value),
                  shape=1, col='darkred') +
 
       facet_wrap(~region_id, nrow=nrow) +
@@ -184,21 +188,36 @@ plots.targets_yoyts_vs_targets <- function(m.keyregions, t.keyregions,
       # scale_color_manual(name='', values=c('black', 'darkred')) +
       scale_fill_manual(name='', values=c('darkred')) +
       scale_alpha_manual(name='', values=c(0.4)) +
-      scale_x_date(limits=as.Date(c("2020-01-01","2021-04-15")),
-                   breaks=seq(as.Date("2020-01-01"), as.Date("2021-04-15"), by="3 month"),
+      scale_x_date(limits=as.Date(c("2020-01-01","2021-04-01")),
+                   breaks=seq(as.Date("2020-01-01"), as.Date("2021-04-01"), by="3 month"),
                    date_labels="%b %Y"
       ) +
       scale_y_continuous(limits=c(ymin, NA), labels=scales::percent, expand=expansion(mult=c(0,.05))) +
-      scale_color_gradientn(colors = chg_colors, guide = F, limits=c(-maxabs,maxabs)) +
-      labs(title="Are key regions on track?",
-           subtitle=paste("Year-on-year change in", poll_str(poll), "levels and path to targets"),
-           x=NULL,
-           y="90-day running mean, year-on-year") )
+      scale_color_gradientn(colors = chg_colors, guide = F, limits=c(-maxabs,maxabs)))
+
+    if(tolower(en_or_zh)=="en"){
+      p <- p +
+        labs(title="Are key regions on track?",
+             subtitle=paste("Year-on-year change in", poll_str(poll), "levels and path to targets"),
+             x=NULL,
+             y="90-day running mean, year-on-year")
+    }else{
+      p <- p +
+        labs(title="重点区域治理进度如何?",
+             subtitle=paste0(poll_str(poll), "浓度同比变化及实现2020-2021秋冬季治理目标达标路线"),
+             x=NULL,
+             y="90天移动平均同比变化") +
+        scale_linetype_discrete(name='', guide = guide_legend(ncol=2)) +
+        scale_x_date(limits=as.Date(c("2020-01-01","2021-04-01")),
+                     breaks=seq(as.Date("2020-01-01"), as.Date("2021-04-01"), by="3 month"),
+                     date_labels="%Y年%m月") +
+        theme(text=ggplot2::element_text(family="STSong", face = "bold", color="black"))
+    }
 
   if(!is.null(folder)) {
     d <- folder
     dir.create(d, showWarnings = F, recursive = T)
-    ggsave(file.path(d, paste0("target_regional_90running_", poll,".png")),
+    ggsave(file.path(d, paste0("target_regional_90running_", poll,"_",en_or_zh,".png")),
            width=width, height=height, dpi=dpi, ...)
   }
 

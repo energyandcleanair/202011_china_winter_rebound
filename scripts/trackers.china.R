@@ -5,11 +5,7 @@ Sys.setenv("TZ"="Etc/UTC"); #https://github.com/rocker-org/rocker-versioned/issu
 library(dplyr)
 library(remotes)
 library(tidyverse)
-
-# remotes::install_github("energyandcleanair/creadeweather", force=F, upgrade=F)
-
 library(rcrea)
-# library(creadeweather)
 library(openxlsx)
 library(lubridate)
 
@@ -169,7 +165,8 @@ m.keyregions <- m.station.obs %>%
 
 #One year running mean plots with the target for end of Q4 and Q1 marked as points, and linear path from latest value to targets
 print("PLOTTING TARGETS============")
-plots.targets_yoyts_vs_targets(m.keyregions, t.keyregions, folder=folder_regional)
+plots.targets_yoyts_vs_targets(m.keyregions, t.keyregions, folder=folder_regional, en_or_zh="en")
+plots.targets_yoyts_vs_targets(m.keyregions, t.keyregions, folder=folder_regional, en_or_zh="zh")
 
 
 # # National ----------------------------------------------------------------
