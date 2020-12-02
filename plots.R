@@ -115,6 +115,13 @@ plots.targets_yoyts_vs_targets <- function(m.keyregions, t.keyregions,
                                            folder=file.path(dir_results_plots, "regional", "EN"),
                                            nrow=2, width=7.5,height=7.5, dpi=270, ...){
 
+  if(en_or_zh=="zh"){
+    font_add_google(name="Noto Serif SC")
+    showtext_auto()
+
+    # showtext_begin()
+  }
+
   poll <- "pm25"
 
   lab_obs <- ifelse(en_or_zh=="zh","实际值","Observations")
@@ -166,7 +173,7 @@ plots.targets_yoyts_vs_targets <- function(m.keyregions, t.keyregions,
   chg_colors <- c("#35416C", "#8CC9D0", "darkgray", "#CC0000", "#990000")
 
 
-  (p <- ggplot() +
+  p <- ggplot() +
       # geom_polygon(data=rect.target, aes(x=date, y=value,fill=type, alpha=type)) +
       geom_line(data=m %>% filter(type==lab_obs),
                 aes(date, value, col=value), linetype="solid", size=0.7) +
@@ -194,7 +201,7 @@ plots.targets_yoyts_vs_targets <- function(m.keyregions, t.keyregions,
                    date_labels="%b %Y"
       ) +
       scale_y_continuous(limits=c(ymin, NA), labels=scales::percent, expand=expansion(mult=c(0,.05))) +
-      scale_color_gradientn(colors = chg_colors, guide = F, limits=c(-maxabs,maxabs)))
+      scale_color_gradientn(colors = chg_colors, guide = F, limits=c(-maxabs,maxabs))
 
     if(tolower(en_or_zh)=="en"){
       p <- p +
@@ -213,16 +220,22 @@ plots.targets_yoyts_vs_targets <- function(m.keyregions, t.keyregions,
                      breaks=seq(as.Date("2020-01-01"), as.Date("2021-04-01"), by="3 month"),
                      minor_breaks =seq(as.Date("2020-01-01"), as.Date("2021-04-01"), by="1 month"),
                      date_labels="%Y年%m月") +
-        theme(text=ggplot2::element_text(family="STSong", face = "bold", color="black"))
+        theme(text=ggplot2::element_text(family="Noto Serif SC", color="black"))
     }
 
   if(!is.null(folder)) {
     d <- folder
     dir.create(d, showWarnings = F, recursive = T)
-    ggsave(file.path(d, paste0("target_regional_90running_", poll,"_",en_or_zh,".png")),
-           width=width, height=height, dpi=dpi, ...)
+    pdf(file.path(d, paste0("target_regional_90running_", poll,"_",en_or_zh,".pdf")),
+       width=width, height=height, ...)
+    print(p)
+    dev.off()
+    showtext_auto(FALSE)
   }
 
+  if(en_or_zh=="zh"){
+    # showtext_end()
+  }
   return(p)
 }
 

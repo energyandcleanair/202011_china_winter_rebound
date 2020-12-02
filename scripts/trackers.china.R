@@ -1,4 +1,4 @@
-install.packages(c("tidyverse","remotes","openxlsx"))
+install.packages(c("tidyverse","remotes","openxlsx","showtext"))
 remotes::install_github("energyandcleanair/rcrea", force=F, upgrade=F)
 Sys.setenv("TZ"="Etc/UTC"); #https://github.com/rocker-org/rocker-versioned/issues/89
 
@@ -8,6 +8,7 @@ library(tidyverse)
 library(rcrea)
 library(openxlsx)
 library(lubridate)
+library(showtext)
 
 source("https://github.com/energyandcleanair/202011_china_winter_rebound/raw/main/plots.R")
 source("https://github.com/energyandcleanair/202011_china_winter_rebound/raw/main/utils.R")

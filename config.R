@@ -4,8 +4,8 @@ library(tidyverse)
 remotes::install_github("energyandcleanair/rcrea")
 library(rcrea)
 librqry(lubridate)
-#
-# library(showtext)
+
+library(showtext)
 # showtext_auto()
 
 mu <- stringi::stri_unescape_unicode("\U00B5")
