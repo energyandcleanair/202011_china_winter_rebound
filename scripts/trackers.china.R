@@ -1,4 +1,4 @@
-install.packages(c("tidyverse","remotes","openxlsx","showtext"))
+install.packages(c("sysfonts","showtext","tidyverse","remotes","openxlsx"))
 remotes::install_github("energyandcleanair/rcrea", force=F, upgrade=F)
 Sys.setenv("TZ"="Etc/UTC"); #https://github.com/rocker-org/rocker-versioned/issues/89
 
