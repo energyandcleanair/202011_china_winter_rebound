@@ -226,7 +226,7 @@ plots.targets_yoyts_vs_targets <- function(m.keyregions, t.keyregions,
   if(!is.null(folder)) {
     d <- folder
     dir.create(d, showWarnings = F, recursive = T)
-    png(file.path(d, paste0("target_regional_90running_", poll,"_",en_or_zh,".pdf")),
+    png(file.path(d, paste0("target_regional_90running_", poll,"_",en_or_zh,".png")),
        width=width, height=height, ...)
     print(p)
     dev.off()
