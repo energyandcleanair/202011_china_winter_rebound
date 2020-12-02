@@ -111,15 +111,14 @@ plots.targets_col <- function(t.keyregions, folder=file.path(dir_results_plots, 
 
 
 plots.targets_yoyts_vs_targets <- function(m.keyregions, t.keyregions,
+                                           en_or_zh="en",
                                            folder=file.path(dir_results_plots, "regional", "EN"),
                                            nrow=2, width=7.5,height=7.5, dpi=270, ...){
 
-  if(en_or_zh=="zh"){
-    font_add_google("Noto Serif SC")
-    showtext_auto()
-  }
-
   poll <- "pm25"
+
+  lab_obs <- ifelse(en_or_zh=="zh","实际值","Observations")
+  lab_tgt <- ifelse(en_or_zh=="zh","达标路线值","Target")
 
   m <- m.keyregions %>%
     filter(!is.na(region_id),
@@ -132,7 +131,7 @@ plots.targets_yoyts_vs_targets <- function(m.keyregions, t.keyregions,
     spread(year, value) %>%
     mutate(value=`2020`/`2019`-1) %>%
     mutate(date=`year<-`(date, 2020),
-           type="Observations") %>%
+           type=lab_obs) %>%
     select(region_id, poll, date, value, type) %>%
     filter(!is.na(region_id))
 
@@ -141,13 +140,13 @@ plots.targets_yoyts_vs_targets <- function(m.keyregions, t.keyregions,
     mutate(date=recode(as.character(Q),
                        "2020.4"=as.Date("2020-12-31"),
                        "2021.1"=as.Date("2021-03-31")),
-           type="Target",
+           type=lab_tgt,
            poll="pm25") %>%
     bind_rows(.,
               m %>%
                 # filter(date==max(max(m.keyregions$date)))) %>%
                 filter(date=='2020-10-01')) %>%
-    mutate(type="Target")
+    mutate(type=lab_tgt)
 
   # rect.target <- t %>%
   #   filter(type=="Target", !is.na(value), !is.na(region_id)) %>%
@@ -167,46 +166,61 @@ plots.targets_yoyts_vs_targets <- function(m.keyregions, t.keyregions,
   chg_colors <- c("#35416C", "#8CC9D0", "darkgray", "#CC0000", "#990000")
 
 
-  (p <- ggplot() +
-      # geom_polygon(data=rect.target, aes(x=date, y=value,fill=type, alpha=type)) +
-      geom_line(data=m %>% filter(type=="Observations"),
-                aes(date, value, col=value), linetype="solid", size=0.7) +
-      geom_line(data=m %>% filter(type=="Target"),
-                aes(date, value),col="darkred", linetype="dashed", size=0.7) +
-      # To force legend
-      geom_line(data=m %>% distinct(type, .keep_all = T), aes(date, value, linetype=type)) +
-      geom_point(data=m %>% filter(type=="Target", date>today()), aes(date, value),
-                 shape=1, col='darkred') +
+  p <- ggplot() +
+    # geom_polygon(data=rect.target, aes(x=date, y=value,fill=type, alpha=type)) +
+    geom_line(data=m %>% filter(type==lab_obs),
+              aes(date, value, col=value), linetype="solid", size=0.7) +
+    geom_line(data=m %>% filter(type==lab_tgt),
+              aes(date, value),col="darkred", linetype="dashed", size=0.7) +
+    # To force legend
+    geom_line(data=m %>% distinct(type, .keep_all = T), aes(date, value, linetype=type)) +
+    geom_point(data=m %>% filter(type==lab_tgt, date>today()), aes(date, value),
+               shape=1, col='darkred') +
 
-      facet_wrap(~region_id, nrow=nrow) +
-      geom_hline(yintercept=0) +
-      # geom_point(data=rect.target, aes(date,value,col=type)) +
-      theme_crea() +
-      theme(legend.position = 'bottom',
-            panel.grid.minor.x = element_line(colour = "grey90"),
-            axis.text.x = element_text(angle=25, vjust=.5)) +
-      scale_linetype_discrete(name='', guide = guide_legend(ncol=2)) +
-      # scale_color_manual(name='', values=c('black', 'darkred')) +
-      scale_fill_manual(name='', values=c('darkred')) +
-      scale_alpha_manual(name='', values=c(0.4)) +
-      scale_x_date(limits=as.Date(c("2020-01-01","2021-04-15")),
-                   breaks=seq(as.Date("2020-01-01"), as.Date("2021-04-15"), by="3 month"),
-                   date_labels="%b %Y"
-      ) +
-      scale_y_continuous(limits=c(ymin, NA), labels=scales::percent, expand=expansion(mult=c(0,.05))) +
-      scale_color_gradientn(colors = chg_colors, guide = F, limits=c(-maxabs,maxabs)) +
+    facet_wrap(~region_id, nrow=nrow) +
+    geom_hline(yintercept=0) +
+    # geom_point(data=rect.target, aes(date,value,col=type)) +
+    theme_crea() +
+    theme(legend.position = 'bottom',
+          panel.grid.minor.x = element_line(colour = "grey95"),
+          panel.grid.major.x = element_line(colour = "grey80"),
+          axis.text.x = element_text(angle=25, vjust=.5)) +
+    scale_linetype_discrete(name='', guide = guide_legend(ncol=2)) +
+    # scale_color_manual(name='', values=c('black', 'darkred')) +
+    scale_fill_manual(name='', values=c('darkred')) +
+    scale_alpha_manual(name='', values=c(0.4)) +
+    scale_x_date(limits=as.Date(c("2020-01-01","2021-04-01")),
+                 breaks=seq(as.Date("2020-01-01"), as.Date("2021-04-01"), by="3 month"),
+                 date_labels="%b %Y"
+    ) +
+    scale_y_continuous(limits=c(ymin, NA), labels=scales::percent, expand=expansion(mult=c(0,.05))) +
+    scale_color_gradientn(colors = chg_colors, guide = F, limits=c(-maxabs,maxabs))
+
+  if(tolower(en_or_zh)=="en"){
+    p <- p +
       labs(title="Are key regions on track?",
            subtitle=paste("Year-on-year change in", poll_str(poll), "levels and path to targets"),
            x=NULL,
-           y="90-day running mean, year-on-year") )
+           y="90-day running mean, year-on-year")
+  }else{
+    p <- p +
+      labs(title="重点区域治理进度如何?",
+           subtitle=paste0(poll_str(poll), "浓度同比变化及实现2020-2021秋冬季治理目标达标路线"),
+           x=NULL,
+           y="90天移动平均同比变化") +
+      scale_linetype_discrete(name='', guide = guide_legend(ncol=2)) +
+      scale_x_date(limits=as.Date(c("2020-01-01","2021-04-01")),
+                   breaks=seq(as.Date("2020-01-01"), as.Date("2021-04-01"), by="3 month"),
+                   minor_breaks =seq(as.Date("2020-01-01"), as.Date("2021-04-01"), by="1 month"),
+                   date_labels="%Y年%m月") +
+      theme(text=ggplot2::element_text(family="Noto Serif SC", color="black"))
+  }
 
   if(!is.null(folder)) {
     d <- folder
     dir.create(d, showWarnings = F, recursive = T)
     ggsave(file.path(d, paste0("target_regional_90running_", poll,"_",en_or_zh,".png")),
            plot=p, width=width, height=height, dpi=dpi, ...)
-    showtext_auto(FALSE)
-
   }
 
   return(p)
@@ -223,7 +237,7 @@ plots.quarter_anomalies <- function(m.dew.regional,
                                     folder=file.path(dir_results_plots, "deweathered", "regional")){
 
   absolute <- absolute_or_percent == "absolute"
-  process_id <- ifelse(absolute, "anomaly", "anomaly_percent")
+  process_id <- ifelse(absolute, "anomaly", "anomaly_vs_counterfactual")
   ylab <- ifelse(absolute, paste0("Anomaly [",mu,"g/m3]"), "Anomaly [%]")
 
   m.plot <- m.dew.regional %>%
@@ -249,6 +263,9 @@ plots.quarter_anomalies <- function(m.dew.regional,
 Source: CREA based on MEE."
        ))
 
+    if(!absolute){
+      p <- p + scale_y_continuous(labels=scales::percent)
+    }
 
     dir.create(folder, showWarnings = F, recursive = T)
     ggsave(file.path(folder, paste0("mee_region_anomaly_qtd_",poll,"_",absolute_or_percent,".png")),

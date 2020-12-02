@@ -1,17 +1,14 @@
-install.packages(c("tidyverse","remotes","openxlsx"))
+install.packages(c("sysfonts","showtext","tidyverse","remotes","openxlsx"))
 remotes::install_github("energyandcleanair/rcrea", force=F, upgrade=F)
 Sys.setenv("TZ"="Etc/UTC"); #https://github.com/rocker-org/rocker-versioned/issues/89
 
 library(dplyr)
 library(remotes)
 library(tidyverse)
-
-# remotes::install_github("energyandcleanair/creadeweather", force=F, upgrade=F)
-
 library(rcrea)
-# library(creadeweather)
 library(openxlsx)
 library(lubridate)
+library(showtext)
 
 source("https://github.com/energyandcleanair/202011_china_winter_rebound/raw/main/plots.R")
 source("https://github.com/energyandcleanair/202011_china_winter_rebound/raw/main/utils.R")
@@ -70,7 +67,8 @@ rcrea::plot_recents(meas_raw=m.region %>% filter(date>="2018-12-01"),
 print("PREPARING TARGETS [1]============")
 targets = read_csv("http://github.com/energyandcleanair/202011_china_winter_rebound/raw/main/data/winter_targets_2020_2021.csv")%>%
   rename(keyregion2018=keyRegion2018) %>%
-  mutate_at(c('target_period', 'base_period', 'base_PM25', '2019Q4','2019Q1'), function(x) x %>% gsub('Q', '\\.', .) %>% as.numeric)
+  mutate_at(c('target_period', 'base_period', 'base_PM25', '2019Q4','2019Q1'), function(x) x %>% gsub('Q', '\\.', .) %>% as.numeric) %>%
+  mutate(poll="pm25")
 
 print("PREPARING TARGETS [2]============")
 #daily average PM2.5 by station
@@ -168,7 +166,8 @@ m.keyregions <- m.station.obs %>%
 
 #One year running mean plots with the target for end of Q4 and Q1 marked as points, and linear path from latest value to targets
 print("PLOTTING TARGETS============")
-plots.targets_yoyts_vs_targets(m.keyregions, t.keyregions, folder=folder_regional)
+plots.targets_yoyts_vs_targets(m.keyregions, t.keyregions, folder=folder_regional, en_or_zh="en")
+plots.targets_yoyts_vs_targets(m.keyregions, t.keyregions, folder=folder_regional, en_or_zh="zh")
 
 
 # # National ----------------------------------------------------------------
