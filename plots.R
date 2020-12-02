@@ -116,7 +116,7 @@ plots.targets_yoyts_vs_targets <- function(m.keyregions, t.keyregions,
                                            nrow=2, width=7.5,height=7.5, dpi=270, ...){
 
   if(en_or_zh=="zh"){
-    font_add_google(name="Noto Serif SC")
+    font_add_google("Noto Serif SC")
     showtext_auto()
 
     # showtext_begin()
@@ -226,7 +226,7 @@ plots.targets_yoyts_vs_targets <- function(m.keyregions, t.keyregions,
   if(!is.null(folder)) {
     d <- folder
     dir.create(d, showWarnings = F, recursive = T)
-    pdf(file.path(d, paste0("target_regional_90running_", poll,"_",en_or_zh,".pdf")),
+    png(file.path(d, paste0("target_regional_90running_", poll,"_",en_or_zh,".pdf")),
        width=width, height=height, ...)
     print(p)
     dev.off()
