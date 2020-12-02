@@ -182,7 +182,8 @@ plots.targets_yoyts_vs_targets <- function(m.keyregions, t.keyregions,
       # geom_point(data=rect.target, aes(date,value,col=type)) +
       theme_crea() +
       theme(legend.position = 'bottom',
-            panel.grid.minor.x = element_line(colour = "grey90"),
+            panel.grid.minor.x = element_line(colour = "grey95"),
+            panel.grid.major.x = element_line(colour = "grey80"),
             axis.text.x = element_text(angle=25, vjust=.5)) +
       scale_linetype_discrete(name='', guide = guide_legend(ncol=2)) +
       # scale_color_manual(name='', values=c('black', 'darkred')) +
@@ -210,6 +211,7 @@ plots.targets_yoyts_vs_targets <- function(m.keyregions, t.keyregions,
         scale_linetype_discrete(name='', guide = guide_legend(ncol=2)) +
         scale_x_date(limits=as.Date(c("2020-01-01","2021-04-01")),
                      breaks=seq(as.Date("2020-01-01"), as.Date("2021-04-01"), by="3 month"),
+                     minor_breaks =seq(as.Date("2020-01-01"), as.Date("2021-04-01"), by="1 month"),
                      date_labels="%Y年%m月") +
         theme(text=ggplot2::element_text(family="STSong", face = "bold", color="black"))
     }
