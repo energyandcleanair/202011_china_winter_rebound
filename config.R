@@ -3,7 +3,7 @@ library(remotes)
 library(tidyverse)
 remotes::install_github("energyandcleanair/rcrea")
 library(rcrea)
-librqry(lubridate)
+library(lubridate)
 #
 # library(showtext)
 # showtext_auto()
