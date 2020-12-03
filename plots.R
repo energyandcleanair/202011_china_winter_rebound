@@ -120,19 +120,6 @@ plots.targets_yoyts_vs_targets <- function(m.keyregions, t.keyregions,
   lab_obs <- ifelse(en_or_zh=="zh","实际值","Observations")
   lab_tgt <- ifelse(en_or_zh=="zh","达标路线值","Target")
 
-  if(en_or_zh=="zh"){
-    m.keyregions$region_id <- recode(toupper(m.keyregions$region_id),
-                                     "2+26"="京津冀及周边",
-                                     "FENWEI"="汾渭平原",
-                                     "PRD"="珠三角地区",
-                                     "YRD"="长三角地区")
-
-    t.keyregions$region_id <- recode(toupper(t.keyregions$region_id),
-                                     "2+26"="京津冀及周边",
-                                     "FENWEI"="汾渭平原",
-                                     "PRD"="珠三角地区",
-                                     "YRD"="长三角地区")
-  }
 
   m <- m.keyregions %>%
     filter(!is.na(region_id),
@@ -173,6 +160,15 @@ plots.targets_yoyts_vs_targets <- function(m.keyregions, t.keyregions,
 
   m <- bind_rows(m, t) %>%
     filter(!is.na(region_id))
+
+  if(en_or_zh=="zh"){
+    m$region_id <- recode(toupper(m$region_id),
+                                     "2+26"="京津冀及周边",
+                                     "FENWEI"="汾渭平原",
+                                     "PRD"="珠三角地区",
+                                     "YRD"="长三角地区")
+  }
+
 
   # scale parameters
   ymin <- min(m$value, na.rm=T) * 1.1
