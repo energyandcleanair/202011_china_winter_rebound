@@ -126,6 +126,12 @@ plots.targets_yoyts_vs_targets <- function(m.keyregions, t.keyregions,
                                      "FENWEI"="汾渭平原",
                                      "PRD"="珠三角地区",
                                      "YRD"="长三角地区")
+
+    t.keyregions$region_id <- recode(toupper(t.keyregions$region_id),
+                                     "2+26"="京津冀及周边",
+                                     "FENWEI"="汾渭平原",
+                                     "PRD"="珠三角地区",
+                                     "YRD"="长三角地区")
   }
 
   m <- m.keyregions %>%
