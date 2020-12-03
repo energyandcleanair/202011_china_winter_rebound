@@ -7,7 +7,6 @@ Sys.setenv("TZ"="Etc/UTC"); #https://github.com/rocker-org/rocker-versioned/issu
 library(dplyr)
 library(rcrea)
 library(lubridate)
-library(showtext)
 
 source("https://github.com/energyandcleanair/202011_china_winter_rebound/raw/main/plots.R")
 source("https://github.com/energyandcleanair/202011_china_winter_rebound/raw/main/utils.R")
