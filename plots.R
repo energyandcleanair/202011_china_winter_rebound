@@ -115,15 +115,18 @@ plots.targets_yoyts_vs_targets <- function(m.keyregions, t.keyregions,
                                            folder=file.path(dir_results_plots, "regional", "EN"),
                                            nrow=2, width=7.5,height=7.5, dpi=270, ...){
 
-  if(en_or_zh=="zh"){
-    font_add_google("Noto Serif SC")
-    showtext_auto()
-  }
-
   poll <- "pm25"
 
   lab_obs <- ifelse(en_or_zh=="zh","实际值","Observations")
   lab_tgt <- ifelse(en_or_zh=="zh","达标路线值","Target")
+
+  if(en_or_zh=="zh"){
+    m.keyregions$region_id <- recode(toupper(m.keyregions$region_id),
+                                     "2+26"="京津冀及周边",
+                                     "FENWEI"="汾渭平原",
+                                     "PRD"="珠三角地区",
+                                     "YRD"="长三角地区")
+  }
 
   m <- m.keyregions %>%
     filter(!is.na(region_id),
@@ -172,66 +175,62 @@ plots.targets_yoyts_vs_targets <- function(m.keyregions, t.keyregions,
 
 
   p <- ggplot() +
-      # geom_polygon(data=rect.target, aes(x=date, y=value,fill=type, alpha=type)) +
-      geom_line(data=m %>% filter(type==lab_obs),
-                aes(date, value, col=value), linetype="solid", size=0.7) +
-      geom_line(data=m %>% filter(type==lab_tgt),
-                aes(date, value),col="darkred", linetype="dashed", size=0.7) +
-      # To force legend
-      geom_line(data=m %>% distinct(type, .keep_all = T), aes(date, value, linetype=type)) +
-      geom_point(data=m %>% filter(type==lab_tgt, date>today()), aes(date, value),
-                 shape=1, col='darkred') +
+    # geom_polygon(data=rect.target, aes(x=date, y=value,fill=type, alpha=type)) +
+    geom_line(data=m %>% filter(type==lab_obs),
+              aes(date, value, col=value), linetype="solid", size=0.7) +
+    geom_line(data=m %>% filter(type==lab_tgt),
+              aes(date, value),col="darkred", linetype="dashed", size=0.7) +
+    # To force legend
+    geom_line(data=m %>% distinct(type, .keep_all = T), aes(date, value, linetype=type)) +
+    geom_point(data=m %>% filter(type==lab_tgt, date>today()), aes(date, value),
+               shape=1, col='darkred') +
 
-      facet_wrap(~region_id, nrow=nrow) +
-      geom_hline(yintercept=0) +
-      # geom_point(data=rect.target, aes(date,value,col=type)) +
-      theme_crea() +
-      theme(legend.position = 'bottom',
-            panel.grid.minor.x = element_line(colour = "grey95"),
-            panel.grid.major.x = element_line(colour = "grey80"),
-            axis.text.x = element_text(angle=25, vjust=.5)) +
+    facet_wrap(~region_id, nrow=nrow) +
+    geom_hline(yintercept=0) +
+    # geom_point(data=rect.target, aes(date,value,col=type)) +
+    theme_crea() +
+    theme(legend.position = 'bottom',
+          panel.grid.minor.x = element_line(colour = "grey95"),
+          panel.grid.major.x = element_line(colour = "grey80"),
+          axis.text.x = element_text(angle=25, vjust=.5)) +
+    scale_linetype_discrete(name='', guide = guide_legend(ncol=2)) +
+    # scale_color_manual(name='', values=c('black', 'darkred')) +
+    scale_fill_manual(name='', values=c('darkred')) +
+    scale_alpha_manual(name='', values=c(0.4)) +
+    scale_x_date(limits=as.Date(c("2020-01-01","2021-04-01")),
+                 breaks=seq(as.Date("2020-01-01"), as.Date("2021-04-01"), by="3 month"),
+                 date_labels="%b %Y"
+    ) +
+    scale_y_continuous(limits=c(ymin, NA), labels=scales::percent, expand=expansion(mult=c(0,.05))) +
+    scale_color_gradientn(colors = chg_colors, guide = F, limits=c(-maxabs,maxabs))
+
+  if(tolower(en_or_zh)=="en"){
+    p <- p +
+      labs(title="Are key regions on track?",
+           subtitle=paste("Year-on-year change in", poll_str(poll), "levels and path to targets"),
+           x=NULL,
+           y="90-day running mean, year-on-year")
+  }else{
+    p <- p +
+      labs(title="重点区域治理进度如何?",
+           subtitle=paste0(poll_str(poll), "浓度同比变化及实现2020-2021秋冬季治理目标达标路线"),
+           x=NULL,
+           y="90天移动平均同比变化") +
       scale_linetype_discrete(name='', guide = guide_legend(ncol=2)) +
-      # scale_color_manual(name='', values=c('black', 'darkred')) +
-      scale_fill_manual(name='', values=c('darkred')) +
-      scale_alpha_manual(name='', values=c(0.4)) +
       scale_x_date(limits=as.Date(c("2020-01-01","2021-04-01")),
                    breaks=seq(as.Date("2020-01-01"), as.Date("2021-04-01"), by="3 month"),
-                   date_labels="%b %Y"
-      ) +
-      scale_y_continuous(limits=c(ymin, NA), labels=scales::percent, expand=expansion(mult=c(0,.05))) +
-      scale_color_gradientn(colors = chg_colors, guide = F, limits=c(-maxabs,maxabs))
-
-    if(tolower(en_or_zh)=="en"){
-      p <- p +
-        labs(title="Are key regions on track?",
-             subtitle=paste("Year-on-year change in", poll_str(poll), "levels and path to targets"),
-             x=NULL,
-             y="90-day running mean, year-on-year")
-    }else{
-      p <- p +
-        labs(title="重点区域治理进度如何?",
-             subtitle=paste0(poll_str(poll), "浓度同比变化及实现2020-2021秋冬季治理目标达标路线"),
-             x=NULL,
-             y="90天移动平均同比变化") +
-        scale_linetype_discrete(name='', guide = guide_legend(ncol=2)) +
-        scale_x_date(limits=as.Date(c("2020-01-01","2021-04-01")),
-                     breaks=seq(as.Date("2020-01-01"), as.Date("2021-04-01"), by="3 month"),
-                     minor_breaks =seq(as.Date("2020-01-01"), as.Date("2021-04-01"), by="1 month"),
-                     date_labels="%Y年%m月") +
-        theme(text=ggplot2::element_text(family="Noto Serif SC", color="black"))
-    }
+                   minor_breaks =seq(as.Date("2020-01-01"), as.Date("2021-04-01"), by="1 month"),
+                   date_labels="%Y年%m月") +
+      theme(text=ggplot2::element_text(family="Noto Serif SC", color="black"))
+  }
 
   if(!is.null(folder)) {
     d <- folder
     dir.create(d, showWarnings = F, recursive = T)
     ggsave(file.path(d, paste0("target_regional_90running_", poll,"_",en_or_zh,".png")),
            plot=p, width=width, height=height, dpi=dpi, ...)
-    showtext_auto(FALSE)
   }
 
-  if(en_or_zh=="zh"){
-    # showtext_end()
-  }
   return(p)
 }
 
