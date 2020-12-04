@@ -2,7 +2,7 @@
   {
      "command": "run_script",
      "rscript":{
-       "url": "https://github.com/energyandcleanair/202011_china_winter_rebound/raw/main/scripts/trackers.china.R"
+       "url": "https://github.com/energyandcleanair/202011_china_winter_rebound/raw/main/scripts/test.R"
      },
     "export": [
        {
