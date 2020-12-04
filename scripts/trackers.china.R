@@ -2,9 +2,11 @@ if(!require(remotes)){install.packages("remotes"); require(remotes)}
 if(!require(tidyverse)){install.packages("tidyverse"); require(tidyverse)}
 
 remotes::install_github("energyandcleanair/rcrea", force=F, upgrade=T)
+
 Sys.setenv("TZ"="Etc/UTC"); #https://github.com/rocker-org/rocker-versioned/issues/89
 
 library(dplyr)
+library(dbplyr)
 library(rcrea)
 library(lubridate)
 
@@ -16,6 +18,8 @@ source("https://github.com/energyandcleanair/202011_china_winter_rebound/raw/mai
 folder <- {tmp_dir}
 folder_regional <- file.path(folder, "regional")
 folder_national <- file.path(folder, "national")
+
+
 
 
 # Getting data ------------------------------------------------------------
