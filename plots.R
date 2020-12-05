@@ -200,6 +200,7 @@ plots.targets_yoyts_vs_targets <- function(m.keyregions, t.keyregions,
     scale_fill_manual(name='', values=c('darkred')) +
     scale_alpha_manual(name='', values=c(0.4)) +
     scale_x_date(limits=as.Date(c("2020-01-01","2021-04-01")),
+                 minor_breaks =seq(as.Date("2020-01-01"), as.Date("2021-04-01"), by="1 month"),
                  breaks=seq(as.Date("2020-01-01"), as.Date("2021-04-01"), by="3 month"),
                  date_labels="%b %Y"
     ) +
