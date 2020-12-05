@@ -1,5 +1,6 @@
 if(!require(remotes)){install.packages("remotes"); require(remotes)}
 if(!require(tidyverse)){install.packages("tidyverse"); require(tidyverse)}
+require(lubridate)
 
 remotes::install_github("energyandcleanair/rcrea", force=F, upgrade=T)
 library(rcrea)
@@ -30,16 +31,16 @@ m.station.obs <- rcrea::measurements(source="mee",
                                      deweathered = F)
 print("ENRICHING MEASUREMENTS============")
 m.station.obs.rich <- m.station.obs %>%
-  mutate(region_id=toupper(region_id)) %>%
-  left_join(stations %>% select(station_code, keyregion2018), by=c("region_id"="station_code"))
+  mutate(location_id=toupper(location_id)) %>%
+  left_join(stations %>% select(station_code, keyregion2018), by=c("location_id"="station_code"))
 
 print("MERGING PER REGION============")
 m.region <- m.station.obs.rich %>%
   filter(!is.na(keyregion2018)) %>%
-  group_by(date=lubridate::date(date), poll, unit, region_id=tolower(keyregion2018), process_id, source, timezone) %>%
+  group_by(date=lubridate::date(date), poll, unit, location_id=tolower(keyregion2018), process_id, source, timezone) %>%
   dplyr::summarise(value=mean(value, na.rm=T)) %>%
   mutate(country="CN",
-         region_name=tools::toTitleCase(region_id))
+         region_name=tools::toTitleCase(location_id))
 
 
 # YOY 30 day  -------------------------------------------------------------------
@@ -48,7 +49,7 @@ rcrea::plot_recents(meas_raw=m.region %>% filter(date>="2018-12-01"),
                     type="yoy-relative",
                     subfile_by = "poll",
                     running_days = c(30),
-                    subplot_by = "region_id",
+                    subplot_by = "location_id",
                     color_by="value",
                     size="l",
                     range="full",
@@ -69,8 +70,8 @@ targets = read_csv("http://github.com/energyandcleanair/202011_china_winter_rebo
 print("PREPARING TARGETS [2]============")
 #daily average PM2.5 by station
 m.station.obs %>% filter(date>='2019-01-01') %>%
-  mutate(date=as.Date(date), region_id=toupper(region_id)) %>%
-  group_by(stationID=region_id, poll, date, process_id, timezone, unit, source) %>%
+  mutate(date=as.Date(date), location_id=toupper(location_id)) %>%
+  group_by(stationID=location_id, poll, date, process_id, timezone, unit, source) %>%
   summarise_at('value', mean, na.rm=T) %>%
   left_join(stations) %>%
   mutate(Q=lubridate::quarter(date, with_year = T)) ->
@@ -154,10 +155,10 @@ t.keyregions <- qtd.yoy %>%
 
 print("PREPARING TARGETS [12]============")
 m.keyregions <- m.station.obs %>%
-  left_join(stations %>% mutate(region_id=tolower(stationID)) %>% select(region_id, keyregion2018)) %>%
+  left_join(stations %>% mutate(location_id=tolower(stationID)) %>% select(location_id, keyregion2018)) %>%
   filter(!is.na(keyregion2018),
          date >= "2018-10-01") %>%
-  group_by(region_id=keyregion2018, process_id, date=as.Date(date), poll, timezone, unit, source) %>%
+  group_by(location_id=keyregion2018, process_id, date=as.Date(date), poll, timezone, unit, source) %>%
   summarise_at('value', mean, na.rm=T)
 
 #One year running mean plots with the target for end of Q4 and Q1 marked as points, and linear path from latest value to targets
@@ -168,14 +169,14 @@ plots.targets_yoyts_vs_targets(m.keyregions, t.keyregions, folder=folder_regiona
 
 # # National ----------------------------------------------------------------
 # print("NATIONAL ============")
-# if(length(unique(m.station.obs$region_id)) < 1385){
+# if(length(unique(m.station.obs$location_id)) < 1385){
 #   stop("Missing stations. You probably queried those of key control regions only")
 # }
 # m.national <- m.station.obs %>%
-#   group_by(date, poll, unit, region_id="china", process_id, source, timezone) %>%
+#   group_by(date, poll, unit, location_id="china", process_id, source, timezone) %>%
 #   summarise(value=mean(value, na.rm=T)) %>%
 #   mutate(country="CN",
-#          region_name=tools::toTitleCase(region_id))
+#          region_name=tools::toTitleCase(location_id))
 #
 #
 # rcrea::plot_recents(meas_raw=m.national %>% filter(date>="2018-11-30"),
@@ -204,8 +205,8 @@ plots.targets_yoyts_vs_targets(m.keyregions, t.keyregions, folder=folder_regiona
 # m.dew.city <- m.dew.city.raw %>%
 #   tidyr::unnest(normalised) %>%
 #   select(-c(process_deweather, process_id, predicted)) %>%
-#   left_join(stations %>% mutate(region_id=tolower(CityEN))) %>%
-#   select(region_id, date, poll, unit, process_id=output, CityZH, Province, keyregion2018, value)
+#   left_join(stations %>% mutate(location_id=tolower(CityEN))) %>%
+#   select(location_id, date, poll, unit, process_id=output, CityZH, Province, keyregion2018, value)
 #
 #
 # m.dew.station.raw <- creadeweather::deweather(source="mee",
@@ -221,9 +222,9 @@ plots.targets_yoyts_vs_targets(m.keyregions, t.keyregions, folder=folder_regiona
 # m.dew.station <-  m.dew.station.raw %>%
 #   tidyr::unnest(normalised) %>%
 #   select(-c(process_deweather, process_id, predicted)) %>%
-#   left_join(stations %>% mutate(region_id=tolower(station_code))) %>%
-#   mutate(region_id=tolower(CityEN)) %>%
-#   group_by(region_id, date, poll, unit, process_id=output, CityZH, Province, keyregion2018) %>%
+#   left_join(stations %>% mutate(location_id=tolower(station_code))) %>%
+#   mutate(location_id=tolower(CityEN)) %>%
+#   group_by(location_id, date, poll, unit, process_id=output, CityZH, Province, keyregion2018) %>%
 #   summarize_at("value", mean, na.rm=T)
 #
 # m.dew <- bind_rows(m.dew.city, m.dew.station)

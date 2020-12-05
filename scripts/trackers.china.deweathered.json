@@ -16,10 +16,6 @@
        {
          "dest_folder":"gs://crea-public/plots/mee/city/keyregions/tracker/deweathered",
          "source_filepath":"city/*.png"
-       },
-       {
-         "dest_folder":"gs://crea-public/data/meas/deweathered",
-         "source_filepath":"city/*.RDS"
        }
      ]
   }

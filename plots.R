@@ -36,27 +36,27 @@ plots.compare_past_years <- function(m, poll, folder=NULL, width=14, height=12, 
 plots.targets_ts <- function(targetmeans.Q1, targetmeans.Q4, m.keyregions, folder=file.path(dir_results_plots, "regional", "EN"), nrow=2, width=7.5,height=7.5, dpi=270, ...){
 
   m <- m.keyregions %>%
-    filter(!is.na(region_id)) %>%
+    filter(!is.na(location_id)) %>%
     rcrea::utils.running_average(365) %>%
     mutate(type="Observations") %>%
-    select(region_id, date, value, type)
+    select(location_id, date, value, type)
 
   t1 <-targetmeans.Q1 %>%
     mutate(date=as.Date("2021-03-31")) %>%
-    group_by(region_id=keyregion2018, date) %>%
+    group_by(location_id=keyregion2018, date) %>%
     summarise_at("value", mean, na.rm=T) %>%
     mutate(type="Target")
 
   t4 <-targetmeans.Q4 %>%
     mutate(date=as.Date("2020-12-31")) %>%
-    group_by(region_id=keyregion2018, date) %>%
+    group_by(location_id=keyregion2018, date) %>%
     summarise_at("value", mean, na.rm=T) %>%
     mutate(type="Target")
 
   lv <- m %>%
     #filter(date==max(date)) %>%
     filter(date=='2020-10-01') %>%
-    select(region_id, date, value, type) %>%
+    select(location_id, date, value, type) %>%
     bind_rows(t4) %>%
     mutate(type="Target")
 
@@ -65,7 +65,7 @@ plots.targets_ts <- function(targetmeans.Q1, targetmeans.Q4, m.keyregions, folde
       geom_point(data=bind_rows(t1,t4)) +
       geom_line(data=bind_rows(t1,t4), size=1) +
       geom_line(data=lv, size=1) +
-      facet_wrap(~region_id, nrow = nrow) +
+      facet_wrap(~location_id, nrow = nrow) +
       rcrea::theme_crea() +
       scale_x_date(limits=as.Date(c("2020-01-01","2021-04-15")),
                    breaks=seq(as.Date("2020-01-01"), as.Date("2021-04-15"), by="3 month"),
@@ -122,10 +122,10 @@ plots.targets_yoyts_vs_targets <- function(m.keyregions, t.keyregions,
 
 
   m <- m.keyregions %>%
-    filter(!is.na(region_id),
+    filter(!is.na(location_id),
            date>="2018-10-01",
            poll==!!poll) %>%
-    rcrea::utils.running_average(90, group_by_cols = c("region_id","poll")) %>%
+    rcrea::utils.running_average(90, group_by_cols = c("location_id","poll")) %>%
     filter(date>="2019-01-01") %>%
     mutate(year=lubridate::year(date),
            date = `year<-`(date, 0)) %>%
@@ -133,11 +133,11 @@ plots.targets_yoyts_vs_targets <- function(m.keyregions, t.keyregions,
     mutate(value=`2020`/`2019`-1) %>%
     mutate(date=`year<-`(date, 2020),
            type=lab_obs) %>%
-    select(region_id, poll, date, value, type) %>%
-    filter(!is.na(region_id))
+    select(location_id, poll, date, value, type) %>%
+    filter(!is.na(location_id))
 
   t <- t.keyregions %>%
-    select(region_id=keyregion2018, value=target_reduction, Q) %>%
+    select(location_id=keyregion2018, value=target_reduction, Q) %>%
     mutate(date=recode(as.character(Q),
                        "2020.4"=as.Date("2020-12-31"),
                        "2021.1"=as.Date("2021-03-31")),
@@ -150,19 +150,19 @@ plots.targets_yoyts_vs_targets <- function(m.keyregions, t.keyregions,
     mutate(type=lab_tgt)
 
   # rect.target <- t %>%
-  #   filter(type=="Target", !is.na(value), !is.na(region_id)) %>%
+  #   filter(type=="Target", !is.na(value), !is.na(location_id)) %>%
   #   arrange(date) %>%
   #   bind_rows(
   #     mutate(., value=ymin) %>% arrange(desc(date)),
   #     .
   #   ) %>%
-  #   arrange(region_id)
+  #   arrange(location_id)
 
   m <- bind_rows(m, t) %>%
-    filter(!is.na(region_id))
+    filter(!is.na(location_id))
 
   if(en_or_zh=="zh"){
-    m$region_id <- recode(toupper(m$region_id),
+    m$location_id <- recode(toupper(m$location_id),
                                      "2+26"="京津冀及周边",
                                      "FENWEI"="汾渭平原",
                                      "PRD"="珠三角地区",
@@ -187,7 +187,7 @@ plots.targets_yoyts_vs_targets <- function(m.keyregions, t.keyregions,
     geom_point(data=m %>% filter(type==lab_tgt, date>today()), aes(date, value),
                shape=1, col='darkred') +
 
-    facet_wrap(~region_id, nrow=nrow) +
+    facet_wrap(~location_id, nrow=nrow) +
     geom_hline(yintercept=0) +
     # geom_point(data=rect.target, aes(date,value,col=type)) +
     theme_crea() +
@@ -254,14 +254,14 @@ plots.quarter_anomalies <- function(m.dew.regional,
     filter(process_id==!!process_id,
            date>="2020-01-01") %>%# Anomaly in absolute terms
     mutate(Q=gsub("\\.","Q",as.character(lubridate::quarter(date, with_year = T)))) %>%
-    group_by(poll, region_id, process_id, Q) %>%
+    group_by(poll, location_id, process_id, Q) %>%
     summarize_at("value", mean, na.rm=T)
 
   polls <- unique(m.plot$poll)
   for(poll in polls){
     (p <-  ggplot(m.plot %>% filter(poll==!!poll)) +
        geom_bar(stat="identity", aes(Q, value, fill="a"), show.legend = F) +
-       facet_wrap(~region_id) +
+       facet_wrap(~location_id) +
        rcrea::CREAtheme.scale_fill_crea_d() +
        theme_crea() +
        labs(
@@ -296,19 +296,19 @@ plots.quarter_yoy <- function(m.dew, m.quarterly){
            poll=="pm25") %>%
     mutate(Q=gsub("\\.","Q",as.character(lubridate::quarter(date, with_year = T)))) %>%
     filter(Q %in% c("2019Q4", "2020Q4")) %>%
-    group_by(keyregion2018, region_id, Q) %>%
+    group_by(keyregion2018, location_id, Q) %>%
     summarize_at("value", mean, na.rm=T) %>%
-    select(keyregion2018, region_id, Q, value) %>%
+    select(keyregion2018, location_id, Q, value) %>%
     mutate_at('Q', make.names) %>% spread(Q, value) %>%
     mutate(QTD_reduction = X2020Q4/X2019Q4-1) %>% select(-starts_with('X')) %>%
     full_join(m.quarterly %>% filter(source=='target', Q==2020.4) %>%
-                mutate(Q="2020Q4", region_id=tolower(CityEN)) %>%
-                select(region_id, keyregion2018, target_reduction), .) %>%
+                mutate(Q="2020Q4", location_id=tolower(CityEN)) %>%
+                select(location_id, keyregion2018, target_reduction), .) %>%
     filter(!is.na(target_reduction)) %>%
     tidyr::pivot_longer(cols=c("target_reduction", "QTD_reduction"), names_to="indicator")
 
 
-  (p <-  ggplot(m.plot %>% mutate(region_name=tools::toTitleCase(region_id))) +
+  (p <-  ggplot(m.plot %>% mutate(region_name=tools::toTitleCase(location_id))) +
       geom_bar(stat="identity", aes(value, region_name, fill=indicator), position="dodge") +
       theme_crea() +
       rcrea::CREAtheme.scale_fill_crea_d() +
