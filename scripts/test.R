@@ -6,27 +6,18 @@ library(rcrea)
 Sys.setenv("TZ"="Etc/UTC"); #https://github.com/rocker-org/rocker-versioned/issues/89
 
 
-source("https://github.com/energyandcleanair/202011_china_winter_rebound/raw/main/plots.R")
-source("https://github.com/energyandcleanair/202011_china_winter_rebound/raw/main/utils.R")
-
-
-# Parameters (filled in python engine)  -----------------------------------
-folder <- {tmp_dir}
-folder_regional <- file.path(folder, "regional")
-folder_national <- file.path(folder, "national")
-
-
-
-
-# Getting data ------------------------------------------------------------
-print("READING STATIONS============")
-stations <- utils.read_stations(local=F)
-station_ids <- stations %>% filter(!is.na(keyregion2018)) %>% pull(station_code)
-
-print("GETTING MEASUREMENTS============")
+print("GETTING MEASUREMENTS CITIES============")
 m.station.obs <- rcrea::measurements(source="mee",
-                                     location_id=station_ids,
+                                     location_id="beijing",
+                                     process_id="city_day_mad",
+                                     date_from="2020-10-01",
+                                     poll=c(rcrea::PM25),
+                                     deweathered = F)
+
+print("GETTING MEASUREMENTS STATIONS============")
+m.station.obs <- rcrea::measurements(source="mee",
+                                     location_id=c("1001A","1002A"),
                                      process_id="station_day_mad",
-                                     date_from="2018-10-01",
+                                     date_from="2020-10-01",
                                      poll=c(rcrea::PM25),
                                      deweathered = F)
