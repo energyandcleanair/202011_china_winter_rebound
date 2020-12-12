@@ -10,8 +10,6 @@ remotes::install_github("energyandcleanair/creadeweather", force=F, upgrade=F)
 
 library(rcrea)
 library(creadeweather)
-library(openxlsx)
-library(lubridate)
 
 source("https://github.com/energyandcleanair/202011_china_winter_rebound/raw/main/plots.R")
 source("https://github.com/energyandcleanair/202011_china_winter_rebound/raw/main/utils.R")
@@ -128,16 +126,10 @@ rcrea::plot_recents(meas_raw=m.dew.regional %>%
                     add_to_ggplot = labs(title="Weather-corrected anomalies of PM2.5 levels",
                                          y="Anomaly [%]"))
 
-<<<<<<< HEAD
+
 # Targets
 plots.quarter_anomalies(m.dew.regional, "relative", folder=folder_regional);
 plots.quarter_anomalies(m.dew.regional, "absolute", folder=folder_regional);
-
-=======
->>>>>>> 0600b70e6deacb305ec6be1e317198c549565d29
-
-plots.quarter_anomalies(m.dew.regional, "absolute", folder=folder_regional)
-plots.quarter_anomalies(m.dew.regional, "relative", folder=folder_regional)
 
 
 # #Need to deifne m.sanity
