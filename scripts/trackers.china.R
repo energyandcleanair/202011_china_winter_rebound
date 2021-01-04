@@ -40,7 +40,7 @@ m.region <- m.station.obs.rich %>%
   group_by(date=lubridate::date(date), poll, unit, location_id=tolower(keyregion2018), process_id, source, timezone) %>%
   dplyr::summarise(value=mean(value, na.rm=T)) %>%
   mutate(country="CN",
-         region_name=tools::toTitleCase(location_id))
+         location_name=tools::toTitleCase(location_id))
 
 
 # YOY 30 day  -------------------------------------------------------------------
@@ -93,25 +93,25 @@ daily %>% filter(poll=='pm25') %>%
 
 print("PREPARING TARGETS [5]============")
 #add targets for winter 2020-2021
-targets %>% select(keyregion2018, Province, CityEN, Q=target_period, base_period, value=PM25_target) %>%
+targets %>% select(keyregion2018, poll, Province, CityEN, Q=target_period, base_period, value=PM25_target) %>%
   mutate(source='target') %>% bind_rows(m.quarterly) -> m.quarterly
 
 print("PREPARING TARGETS [6]============")
 #add official monthly averaged data from MEE
-targets %>% select(keyregion2018, Province, CityEN, Q=base_period, value=base_PM25) %>%
+targets %>% select(keyregion2018, poll, Province, CityEN, Q=base_period, value=base_PM25) %>%
   mutate(source='monthly') %>% bind_rows(m.quarterly) -> m.quarterly
 
 print("PREPARING TARGETS [7]============")
 #calculate Q4 and Q1 target reductions
 targets %>% mutate(PM25_target = ifelse(PM25_target==0, base_PM25, PM25_target), #replace 0's with base period values
                    target_reduction = PM25_target / base_PM25 - 1) %>%
-  select(CityEN, Province, keyregion2018, Q = target_period, target_reduction) %>% left_join(m.quarterly, .) ->
+  select(CityEN, Province, poll, keyregion2018, Q = target_period, target_reduction) %>% left_join(m.quarterly, .) ->
   m.quarterly
 
 print("PREPARING TARGETS [8]============")
 #calculate annual means consistent with targets
 m.quarterly %<>% filter(source=='hourly') %>%
-  select(CityEN, Province, keyregion2018, base_period=Q, value_base = value) %>%
+  select(CityEN, poll, Province, keyregion2018, base_period=Q, value_base = value) %>%
   left_join(m.quarterly, .) %>%
   mutate(value = ifelse(source == 'target',
                         (1 + target_reduction) * value_base,
@@ -120,7 +120,7 @@ m.quarterly %<>% filter(source=='hourly') %>%
 print("PREPARING TARGETS [9]============")
 mean4=function(x) ifelse(length(x)==4,mean(x), NA)
 targetmean=function(df) {
-  df %>% group_by(CityEN, Province, keyregion2018) %>% summarise_at('value', mean4) %>%
+  df %>% group_by(CityEN, poll, Province, keyregion2018) %>% summarise_at('value', mean4) %>%
     filter(!is.na(value))
 }
 
@@ -132,7 +132,7 @@ bind_rows(m.quarterly %>% filter(source == 'hourly', Q %in% c(2020.2, 2020.3)),
 
 print("PREPARING TARGETS [10]============")
 max.date <- max(daily$date)
-m.qtd = daily %>% ungroup %>% filter(Q %in% c(2019.4, 2020.4), yday(date)<=yday(max(daily$date)))
+m.qtd = daily %>% ungroup %>% filter(Q %in% c(2019.4, 2020.4))
 means.qtd = m.qtd %>% group_by(keyregion2018, Province, CityEN, poll, Q) %>% summarise_at('value', mean, na.rm=T)
 means.qtd = m.qtd %>% group_by(keyregion2018, poll, Q) %>% summarise_at('value', mean, na.rm=T) %>% bind_rows(means.qtd)
 means.qtd = m.qtd %>% group_by(poll, Q) %>% summarise_at('value', mean, na.rm=T) %>%
@@ -146,11 +146,11 @@ means.qtd %>%
 print("PREPARING TARGETS [11]============")
 t.keyregions <- qtd.yoy %>%
   full_join(m.quarterly %>% filter(source=='target', Q==2020.4) %>%
-              select(CityEN, Province, keyregion2018, target_reduction), .) %>%
+              select(CityEN, poll, Province, keyregion2018, target_reduction), .) %>%
   mutate(Q=2020.4) %>%
   bind_rows(m.quarterly %>%
               filter(source=='target', Q==2021.1) %>%
-              select(CityEN, Province, keyregion2018, target_reduction, Q)) %>%
+              select(CityEN, poll, Province, keyregion2018, target_reduction, Q)) %>%
   filter(is.na(CityEN), !is.na(target_reduction))
 
 print("PREPARING TARGETS [12]============")
