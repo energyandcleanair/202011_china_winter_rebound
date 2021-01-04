@@ -128,13 +128,15 @@ plots.targets_yoyts_vs_targets <- function(m.keyregions, t.keyregions,
     rcrea::utils.running_average(90, group_by_cols = c("location_id","poll")) %>%
     filter(date>="2019-01-01") %>%
     mutate(year=lubridate::year(date),
-           date = `year<-`(date, 0)) %>%
-    spread(year, value) %>%
-    mutate(value=`2020`/`2019`-1) %>%
-    mutate(date=`year<-`(date, 2020),
-           type=lab_obs) %>%
-    select(location_id, poll, date, value, type) %>%
-    filter(!is.na(location_id))
+           date_year = `year<-`(date, 0)) %>%
+    group_by(location_id, poll, date_year) %>%
+    arrange(year) %>%
+    mutate(
+      value=value/lag(value)-1,
+      type=lab_obs
+    ) %>%
+    filter(!is.na(value) & !is.na(location_id)) %>%
+    select(-c(date_year))
 
   t <- t.keyregions %>%
     select(location_id=keyregion2018, value=target_reduction, Q) %>%
@@ -177,13 +179,13 @@ plots.targets_yoyts_vs_targets <- function(m.keyregions, t.keyregions,
 
 
   p <- ggplot() +
+    # To force legend
+    geom_line(data=m %>% distinct(type, .keep_all = T), aes(date, value, linetype=type)) +
     # geom_polygon(data=rect.target, aes(x=date, y=value,fill=type, alpha=type)) +
     geom_line(data=m %>% filter(type==lab_obs),
               aes(date, value, col=value), linetype="solid", size=0.7) +
     geom_line(data=m %>% filter(type==lab_tgt),
               aes(date, value),col="darkred", linetype="dashed", size=0.7) +
-    # To force legend
-    geom_line(data=m %>% distinct(type, .keep_all = T), aes(date, value, linetype=type)) +
     geom_point(data=m %>% filter(type==lab_tgt, date>today()), aes(date, value),
                shape=1, col='darkred') +
 
@@ -206,6 +208,7 @@ plots.targets_yoyts_vs_targets <- function(m.keyregions, t.keyregions,
     ) +
     scale_y_continuous(limits=c(ymin, NA), labels=scales::percent, expand=expansion(mult=c(0,.05))) +
     scale_color_gradientn(colors = chg_colors, guide = F, limits=c(-maxabs,maxabs))
+
 
   if(tolower(en_or_zh)=="en"){
     p <- p +
