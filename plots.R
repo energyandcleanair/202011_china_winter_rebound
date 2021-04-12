@@ -175,6 +175,7 @@ plots.targets_yoyts_vs_targets <- function(m.keyregions, t.keyregions,
   # scale parameters
   ymin <- min(m$value, na.rm=T) * 1.1
   maxabs <- max(abs(m$value), na.rm=T)
+  maxdate <- as.Date(max(m$date, na.rm=T))
   chg_colors <- c("#35416C", "#8CC9D0", "darkgray", "#CC0000", "#990000")
 
 
@@ -201,9 +202,9 @@ plots.targets_yoyts_vs_targets <- function(m.keyregions, t.keyregions,
     # scale_color_manual(name='', values=c('black', 'darkred')) +
     scale_fill_manual(name='', values=c('darkred')) +
     scale_alpha_manual(name='', values=c(0.4)) +
-    scale_x_date(limits=as.Date(c("2020-01-01","2021-04-01")),
-                 minor_breaks =seq(as.Date("2020-01-01"), as.Date("2021-04-01"), by="1 month"),
-                 breaks=seq(as.Date("2020-01-01"), as.Date("2021-04-01"), by="3 month"),
+    scale_x_date(limits=as.Date(c("2020-01-01", maxdate)),
+                 minor_breaks =seq(as.Date("2020-01-01"), maxdate, by="1 month"),
+                 breaks=seq(as.Date("2020-01-01"), maxdate, by="3 month"),
                  date_labels="%b %Y"
     ) +
     scale_y_continuous(limits=c(ymin, NA), labels=scales::percent, expand=expansion(mult=c(0,.05))) +
@@ -221,13 +222,7 @@ plots.targets_yoyts_vs_targets <- function(m.keyregions, t.keyregions,
       labs(title="重点区域治理进度如何?",
            subtitle=paste0(poll_str(poll), "浓度同比变化及实现2020-2021秋冬季治理目标达标路线"),
            x=NULL,
-           y="90天移动平均同比变化") +
-      scale_linetype_discrete(name='', guide = guide_legend(ncol=2)) +
-      scale_x_date(limits=as.Date(c("2020-01-01","2021-04-01")),
-                   breaks=seq(as.Date("2020-01-01"), as.Date("2021-04-01"), by="3 month"),
-                   minor_breaks =seq(as.Date("2020-01-01"), as.Date("2021-04-01"), by="1 month"),
-                   date_labels="%Y年%m月") +
-      theme(text=ggplot2::element_text(family="Noto Serif SC", color="black"))
+           y="90天移动平均同比变化")
   }
 
   if(!is.null(folder)) {
