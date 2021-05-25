@@ -2,7 +2,7 @@ if(!require(remotes)){install.packages("remotes"); require(remotes)}
 if(!require(tidyverse)){install.packages("tidyverse"); require(tidyverse)}
 require(lubridate)
 
-remotes::install_github("energyandcleanair/rcrea", force=T, upgrade=T)
+remotes::install_github("energyandcleanair/rcrea", force=T, upgrade=T, dependencies=F)
 library(rcrea)
 Sys.setenv("TZ"="Etc/UTC"); #https://github.com/rocker-org/rocker-versioned/issues/89
 
