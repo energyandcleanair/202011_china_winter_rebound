@@ -12,7 +12,7 @@ source("https://github.com/energyandcleanair/202011_china_winter_rebound/raw/mai
 
 
 # Parameters (filled in python engine)  -----------------------------------
-folder <- {tmp_dir}
+folder <- {tmp_dir} # Used in rpy2, replaced by a temporary folder
 folder_regional <- file.path(folder, "regional")
 folder_national <- file.path(folder, "national")
 
@@ -27,12 +27,21 @@ m.station.obs <- rcrea::measurements(source="mee",
                                      location_id=station_ids,
                                      process_id="station_day_mad",
                                      date_from="2018-10-01",
-                                     poll=c(rcrea::PM25),
+                                     poll=c(rcrea::PM25, rcrea::PM10),
                                      deweathered = F)
+
 print("ENRICHING MEASUREMENTS============")
 m.station.obs.rich <- m.station.obs %>%
   mutate(location_id=toupper(location_id)) %>%
   left_join(stations %>% select(station_code, keyregion2018), by=c("location_id"="station_code"))
+
+
+print("REMOVING SANDSTORMS============")
+m.station.obs.rich <- m.station.obs.rich %>%
+  utils.add_sandstorm() %>%
+  filter(!sand_storm) %>%
+  filter(poll==rcrea::PM25) # Don't need PM10 anymore
+
 
 print("MERGING PER REGION============")
 m.region <- m.station.obs.rich %>%
@@ -80,13 +89,14 @@ m.station.obs %>% filter(date>='2019-01-01') %>%
 print("PREPARING TARGETS [3]============")
 #quarterly averages by city
 daily %>% filter(poll=='pm25') %>%
-  group_by(Province, CityEN, keyregion2018, poll, Q) %>% summarise_at('value', mean, na.rm=T) ->
-  m.quarterly
+  group_by(Province, CityEN, keyregion2018, poll, Q) %>%
+  summarise_at('value', mean, na.rm=T) -> m.quarterly
 
 print("PREPARING TARGETS [4]============")
 #quarterly averages by key region
 daily %>% filter(poll=='pm25') %>%
-  group_by(keyregion2018, poll, Q) %>% summarise_at('value', mean, na.rm=T) %>%
+  group_by(keyregion2018, poll, Q) %>%
+  summarise_at('value', mean, na.rm=T) %>%
   bind_rows(m.quarterly) %>%
   filter(!is.na(keyregion2018)) %>%
   mutate(source='hourly') -> m.quarterly
@@ -105,17 +115,44 @@ print("PREPARING TARGETS [7]============")
 #calculate Q4 and Q1 target reductions
 targets %>% mutate(PM25_target = ifelse(PM25_target==0, base_PM25, PM25_target), #replace 0's with base period values
                    target_reduction = PM25_target / base_PM25 - 1) %>%
-  select(CityEN, Province, poll, keyregion2018, Q = target_period, target_reduction) %>% left_join(m.quarterly, .) ->
+  select(CityEN, Province, poll, keyregion2018, Q = target_period, target_reduction) %>%
+  left_join(m.quarterly, .) ->
   m.quarterly
+
+# Adding a target with 2020Q1 as base period since the original base period is 2019Q1, but we plot yoy
+m.quarterly %>%
+  filter(source=='target',
+         is.na(CityEN),
+         base_period==2019.1) %>%
+  mutate(target=value_base * (1+target_reduction)) %>%
+  select(CityEN, Province, poll, keyregion2018, target) %>%
+  left_join(
+    m.quarterly %>%
+      filter(source=="hourly",
+             is.na(CityEN),
+             Q==2020.1) %>%
+      select(CityEN, Province, poll, keyregion2018, value)
+  ) %>%
+  mutate(
+    target_reduction=target/value -1,
+    Q=2021.1,
+    base_period=2020.1,
+    value_base=value,
+    value=target,
+    source="target"
+  ) %>%
+  bind_rows(m.quarterly, .) ->
+  m.quarterly
+
 
 print("PREPARING TARGETS [8]============")
 #calculate annual means consistent with targets
-m.quarterly %<>% filter(source=='hourly') %>%
+m.quarterly %>% filter(source=='hourly') %>%
   select(CityEN, poll, Province, keyregion2018, base_period=Q, value_base = value) %>%
   left_join(m.quarterly, .) %>%
   mutate(value = ifelse(source == 'target',
                         (1 + target_reduction) * value_base,
-                        value))
+                        value)) -> m.quarterly
 
 print("PREPARING TARGETS [9]============")
 mean4=function(x) ifelse(length(x)==4,mean(x), NA)
@@ -149,9 +186,14 @@ t.keyregions <- qtd.yoy %>%
               select(CityEN, poll, Province, keyregion2018, target_reduction), .) %>%
   mutate(Q=2020.4) %>%
   bind_rows(m.quarterly %>%
-              filter(source=='target', Q==2021.1) %>%
+              filter(source=='target', Q==2021.1, base_period==2019.1) %>%
               select(CityEN, poll, Province, keyregion2018, target_reduction, Q)) %>%
   filter(is.na(CityEN), !is.na(target_reduction))
+
+
+t.keyregions.abs <- m.quarterly %>%
+  filter(source=='target', Q %in% c(2021.1, 2020.4), is.na(CityEN)) %>%
+              select(CityEN, poll, Province, keyregion2018, target=value, Q)
 
 print("PREPARING TARGETS [12]============")
 m.keyregions <- m.station.obs %>%
@@ -165,3 +207,9 @@ m.keyregions <- m.station.obs %>%
 print("PLOTTING TARGETS============")
 plots.targets_yoyts_vs_targets(m.keyregions, t.keyregions, folder=folder_regional, en_or_zh="en")
 plots.targets_yoyts_vs_targets(m.keyregions, t.keyregions, folder=folder_regional, en_or_zh="zh")
+
+
+
+plots.observed_vs_targets(m.keyregions, t.keyregions.abs, folder=folder_regional, en_or_zh="en")
+plots.observed_vs_targets(m.keyregions, t.keyregions.abs, folder=folder_regional, en_or_zh="zh")
+
