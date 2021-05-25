@@ -8,7 +8,7 @@ utils.read_stations <- function(local=T){
            stringsAsFactors=F) %>%
     rename(station_name=station,CityZH=City) -> citynames
 
-  stationkey %>% sel(-station_name, -CityZH) %>%
+  stationkey %>% dplyr::select(-station_name, -CityZH) %>%
     right_join(citynames, .)
 }
 
@@ -40,6 +40,16 @@ utils.replace_w_chinese <- function(m, stations){
       region_name=region_id) %>%
     select(-c(CityEN, CityZH))
 }
+
+utils.add_sandstorm <- function(m,
+                                  storm_pm10_threshold=400,
+                                  storm_pm_ratio=0.8){
+  m %>%
+    tidyr::spread("poll", "value") %>%
+    mutate(sand_storm = (pm10 > storm_pm10_threshold) & (pm25/pm10 < storm_pm_ratio)) %>% # THIS AFFECTS A LOT RESULTS
+    tidyr::gather("poll","value", pm25, pm10)
+}
+
 
 utils.deweathered_regions <- function(m.deweathered.city, m.deweathered.stations){
 

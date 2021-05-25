@@ -132,9 +132,12 @@ plots.targets_yoyts_vs_targets <- function(m.keyregions, t.keyregions,
     group_by(location_id, poll, date_year) %>%
     arrange(year) %>%
     mutate(
-      value=value/lag(value)-1,
+      # value=value/lag(value)-1,
+      value_1=value/lag(value, n=1)-1,
+      value_2=value/lag(value, n=2)-1,
       type=lab_obs
     ) %>%
+    mutate(value=ifelse(year==2021, value_2, value_1)) %>%
     filter(!is.na(value) & !is.na(location_id)) %>%
     select(-c(date_year))
 
@@ -235,6 +238,133 @@ plots.targets_yoyts_vs_targets <- function(m.keyregions, t.keyregions,
   return(p)
 }
 
+plots.observed_vs_targets <- function(m.keyregions,
+                                      t.keyregions.abs,
+                                      en_or_zh="en",
+                                      folder=file.path(dir_results_plots, "regional", "EN"),
+                                      nrow=2, width=7.5,height=7.5, dpi=270, ...){
+
+  poll <- "pm25"
+
+  lab_obs <- ifelse(en_or_zh=="zh","实际值","Observations")
+  lab_tgt <- ifelse(en_or_zh=="zh","达标路线值","Target")
+
+
+  m <- m.keyregions %>%
+    filter(!is.na(location_id),
+           date>="2018-10-01",
+           poll==!!poll) %>%
+    rcrea::utils.running_average(90, group_by_cols = c("location_id","poll")) %>%
+    filter(date>="2019-01-01") %>%
+    mutate(type=lab_obs)
+    # mutate(year=lubridate::year(date),
+    #        date_year = `year<-`(date, 0)) %>%
+    # group_by(location_id, poll, date_year) %>%
+    # arrange(year) %>%
+    # mutate(
+    #   value=value/lag(value)-1,
+    #   type=lab_obs
+    # ) %>%
+    # filter(!is.na(value) & !is.na(location_id)) %>%
+    # select(-c(date_year))
+
+  t <- t.keyregions.abs %>%
+    select(location_id=keyregion2018, value=target, Q) %>%
+    mutate(date=recode(as.character(Q),
+                       "2020.4"=as.Date("2020-12-31"),
+                       "2021.1"=as.Date("2021-03-31")),
+           poll="pm25") %>%
+    bind_rows(.,
+              m %>%
+                # filter(date==max(max(m.keyregions$date)))) %>%
+                filter(date=='2020-10-01')) %>%
+    mutate(type=lab_tgt)
+
+  # rect.target <- t %>%
+  #   filter(type=="Target", !is.na(value), !is.na(location_id)) %>%
+  #   arrange(date) %>%
+  #   bind_rows(
+  #     mutate(., value=ymin) %>% arrange(desc(date)),
+  #     .
+  #   ) %>%
+  #   arrange(location_id)
+
+  m <- bind_rows(m, t) %>%
+    filter(!is.na(location_id))
+
+  if(en_or_zh=="zh"){
+    m$location_id <- recode(toupper(m$location_id),
+                            "2+26"="京津冀及周边",
+                            "FENWEI"="汾渭平原",
+                            "PRD"="珠三角地区",
+                            "YRD"="长三角地区")
+  }
+
+
+  # scale parameters
+  ymin <- min(m$value, na.rm=T) * 1.1
+  maxabs <- max(abs(m$value), na.rm=T)
+  maxdate <- as.Date(max(m$date, na.rm=T))
+  # chg_colors <- c("#35416C", "#8CC9D0", "darkgray", "#CC0000", "#990000")
+
+
+  p <- ggplot() +
+    # To force legend
+    geom_line(data=m %>% distinct(type, .keep_all = T), aes(date, value, linetype=type)) +
+    # geom_polygon(data=rect.target, aes(x=date, y=value,fill=type, alpha=type)) +
+    geom_line(data=m %>% filter(type==lab_obs),
+              aes(date, value, col="1"), linetype="solid", size=0.7, show.legend = F) +
+    geom_line(data=m %>% filter(type==lab_tgt),
+              aes(date, value), col="darkred", linetype="dashed", size=0.7) +
+    geom_point(data=m %>% filter(type==lab_tgt), aes(date, value),
+               shape=1, col='darkred') +
+
+    facet_wrap(~location_id, nrow=nrow) +
+    # geom_hline(yintercept=0) +
+    # geom_point(data=rect.target, aes(date,value,col=type)) +
+    theme_crea() +
+    theme(legend.position = 'bottom',
+          panel.grid.minor.x = element_line(colour = "grey95"),
+          panel.grid.major.x = element_line(colour = "grey80"),
+          axis.text.x = element_text(angle=25, vjust=.5)) +
+    scale_linetype_discrete(name='', guide = guide_legend(ncol=2)) +
+    # scale_color_manual(name='', values=c('black', 'darkred')) +
+    # scale_fill_manual(name='', values=c('darkred')) +
+    # scale_alpha_manual(name='', values=c(0.4)) +
+    scale_x_date(limits=as.Date(c("2020-01-01", maxdate)),
+                 minor_breaks =seq(as.Date("2020-01-01"), maxdate, by="1 month"),
+                 breaks=seq(as.Date("2020-01-01"), maxdate, by="3 month"),
+                 date_labels="%b %Y"
+    ) +
+    scale_y_continuous(limits=c(0, NA),
+                       expand=expansion(mult=c(0,.05))) +
+    rcrea::CREAtheme.scale_color_crea_d()
+    # scale_color_gradientn(colors = chg_colors, guide = F, limits=c(-maxabs,maxabs))
+
+
+  if(tolower(en_or_zh)=="en"){
+    p <- p +
+      labs(title="Are key regions on track?",
+           subtitle=paste(poll_str(poll), "levels and path to targets"),
+           x=NULL,
+           y="µg/m3")
+  }else{
+    p <- p +
+      labs(title="重点区域治理进度如何?",
+           subtitle=paste0(poll_str(poll), "浓度及实现2020-2021秋冬季治理目标达标路线"),
+           x=NULL,
+           y="µg/m3")
+  }
+
+  if(!is.null(folder)) {
+    d <- folder
+    dir.create(d, showWarnings = F, recursive = T)
+    ggsave(file.path(d, paste0("target_regional_abs_", poll,"_",en_or_zh,".png")),
+           plot=p, width=width, height=height, dpi=dpi, ...)
+  }
+
+  return(p)
+}
 
 
 # Deweathered -------------------------------------------------------------

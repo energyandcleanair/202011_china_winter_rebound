@@ -5,8 +5,8 @@
 library(dplyr)
 library(remotes)
 library(tidyverse)
-remotes::install_github("energyandcleanair/rcrea", force=F, upgrade=T)
-remotes::install_github("energyandcleanair/creadeweather", force=F, upgrade=T)
+remotes::install_github("energyandcleanair/rcrea", force=F, upgrade=T, dependencies=F)
+remotes::install_github("energyandcleanair/creadeweather", force=F, upgrade=T, dependencies=F)
 
 library(rcrea)
 library(creadeweather)
