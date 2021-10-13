@@ -124,7 +124,7 @@ m.quarterly %>%
   filter(source=='target',
          is.na(CityEN),
          base_period==2019.1) %>%
-  mutate(target=value_base * (1+target_reduction)) %>%
+  mutate(target=value * (1+target_reduction)) %>%
   select(CityEN, Province, poll, keyregion2018, target) %>%
   left_join(
     m.quarterly %>%

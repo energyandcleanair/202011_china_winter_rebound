@@ -338,7 +338,7 @@ plots.observed_vs_targets <- function(m.keyregions,
     ) +
     scale_y_continuous(limits=c(0, NA),
                        expand=expansion(mult=c(0,.05))) +
-    rcrea::CREAtheme.scale_color_crea_d()
+    rcrea::scale_color_crea_d()
     # scale_color_gradientn(colors = chg_colors, guide = F, limits=c(-maxabs,maxabs))
 
 
@@ -391,7 +391,7 @@ plots.quarter_anomalies <- function(m.dew.regional,
     (p <-  ggplot(m.plot %>% filter(poll==!!poll)) +
        geom_bar(stat="identity", aes(Q, value, fill="a"), show.legend = F) +
        facet_wrap(~location_id) +
-       rcrea::CREAtheme.scale_fill_crea_d() +
+       rcrea::scale_color_crea_d() +
        theme_crea() +
        labs(
          y=ylab,
