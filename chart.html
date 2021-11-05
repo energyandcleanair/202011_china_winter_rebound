@@ -47,9 +47,40 @@
 
       var layout = {
         grid: { rows: 2, columns: 2, pattern: "independent" },
+        annotations: [
+          {
+            x: 0.1,
+            y: 1,
+            xref: "paper",
+            yref: "paper",
+            text: "Annotation A",
+            showarrow: false,
+            // arrowhead: 3,
+            // ax: -30,
+            // ay: -40,
+          },
+          {
+            x: 0.9,
+            y: 1,
+            xref: "paper",
+            yref: "paper",
+            text: "Annotation B",
+            showarrow: false,
+          },
+          {
+            x: 0.9,
+            y: 0.5,
+            xref: "paper",
+            yref: "paper",
+            text: "Annotation C",
+            showarrow: false,
+          },
+        ],
       };
 
-      Plotly.newPlot("plot", plot_data, layout);
+      var config = { responsive: true };
+
+      Plotly.newPlot("plot", plot_data, layout, config);
     }
     makeplot();
   </script>
