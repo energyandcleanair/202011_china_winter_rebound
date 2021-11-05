@@ -1,0 +1,56 @@
+<head>
+  <!-- Plotly.js -->
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+
+<body>
+  <div id="plot" style="width: 100%; height: 100vh">
+    <!-- Plotly chart will be drawn inside this DIV -->
+  </div>
+  <script>
+    function makeplot() {
+      Plotly.d3.csv(
+        "https://raw.githubusercontent.com/energyandcleanair/202011_china_winter_rebound/main/results/m_keyregions.csv",
+        function (data) {
+          processData(data);
+        }
+      );
+    }
+
+    function processData(data) {
+      // Split into groups
+      const groups = data.reduce((acc, item) => {
+        if (!acc[item.location_id]) {
+          acc[item.location_id] = [];
+        }
+
+        acc[item.location_id].push(item);
+        return acc;
+      }, {});
+
+      plotData(groups);
+    }
+
+    function plotData(groups) {
+      // Create one chart
+      var data = Object.values(groups);
+
+      var plot_data = data.map(function (group, index) {
+        return {
+          type: "scatter",
+          x: group.map((x) => x.date),
+          y: group.map((x) => x.value),
+          xaxis: "x" + (index + 1),
+          yaxis: "y" + (index + 1),
+        };
+      });
+
+      var layout = {
+        grid: { rows: 2, columns: 2, pattern: "independent" },
+      };
+
+      Plotly.newPlot("plot", plot_data, layout);
+    }
+    makeplot();
+  </script>
+</body>
